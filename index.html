@@ -38,6 +38,15 @@
     .neon-glow-purple {
       box-shadow: 0 0 20px rgba(168, 85, 247, 0.4), inset 0 0 10px rgba(168, 85, 247, 0.2);
     }
+    .neon-glow-emerald {
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(16, 185, 129, 0.2);
+    }
+    .neon-glow-orange {
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.4), inset 0 0 10px rgba(249, 115, 22, 0.2);
+    }
+    .neon-glow-blue {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), inset 0 0 10px rgba(59, 130, 246, 0.2);
+    }
 
     .card-hover {
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -177,6 +186,63 @@
           </div>
         </div>
 
+        <!-- Game 5: Neon Penalty Shootout -->
+        <div class="glass-panel rounded-2xl overflow-hidden card-hover flex flex-col justify-between border-t-2 border-t-emerald-500/80">
+          <div class="p-6">
+            <div class="w-12 h-12 rounded-xl bg-emerald-950/80 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-2xl mb-4 neon-glow-emerald">
+              <i class="fa-solid fa-futbol"></i>
+            </div>
+            <h3 class="text-xl font-bold font-orbitron text-white mb-2">Neon Penalty</h3>
+            <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+              Swipe to shoot neon footballs past the moving keeper block! Score goals and beat your high score.
+            </p>
+          </div>
+          <div class="p-6 pt-0">
+            <a href="neon-penalty.html" onclick="playClickSound()" class="w-full py-3 px-4 rounded-xl font-bold font-orbitron bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-slate-950 flex items-center justify-center space-x-2 transition-all shadow-lg shadow-emerald-500/20">
+              <span>PLAY NOW</span>
+              <i class="fa-solid fa-play text-xs"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Game 6: Neon Hoops -->
+        <div class="glass-panel rounded-2xl overflow-hidden card-hover flex flex-col justify-between border-t-2 border-t-orange-500/80">
+          <div class="p-6">
+            <div class="w-12 h-12 rounded-xl bg-orange-950/80 border border-orange-500/40 flex items-center justify-center text-orange-400 text-2xl mb-4 neon-glow-orange">
+              <i class="fa-solid fa-basketball"></i>
+            </div>
+            <h3 class="text-xl font-bold font-orbitron text-white mb-2">Neon Hoops</h3>
+            <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+              Flick basketballs through glowing moving hoops in a fast-paced arcade challenge!
+            </p>
+          </div>
+          <div class="p-6 pt-0">
+            <a href="neon-hoops.html" onclick="playClickSound()" class="w-full py-3 px-4 rounded-xl font-bold font-orbitron bg-gradient-to-r from-orange-400 to-amber-600 hover:from-orange-300 hover:to-amber-500 text-slate-950 flex items-center justify-center space-x-2 transition-all shadow-lg shadow-orange-500/20">
+              <span>PLAY NOW</span>
+              <i class="fa-solid fa-play text-xs"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Game 7: Neon Ping Pong -->
+        <div class="glass-panel rounded-2xl overflow-hidden card-hover flex flex-col justify-between border-t-2 border-t-blue-500/80">
+          <div class="p-6">
+            <div class="w-12 h-12 rounded-xl bg-blue-950/80 border border-blue-500/40 flex items-center justify-center text-blue-400 text-2xl mb-4 neon-glow-blue">
+              <i class="fa-solid fa-table-tennis-paddle-ball"></i>
+            </div>
+            <h3 class="text-xl font-bold font-orbitron text-white mb-2">Neon Ping Pong</h3>
+            <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+              Retro arcade table tennis showdown with cyberpunk neon paddles and glowing balls.
+            </p>
+          </div>
+          <div class="p-6 pt-0">
+            <a href="neo-ping-pong.html" onclick="playClickSound()" class="w-full py-3 px-4 rounded-xl font-bold font-orbitron bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-slate-950 flex items-center justify-center space-x-2 transition-all shadow-lg shadow-blue-500/20">
+              <span>PLAY NOW</span>
+              <i class="fa-solid fa-play text-xs"></i>
+            </a>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
@@ -239,7 +305,7 @@
       radius: Math.random() * 2 + 1,
       vx: (Math.random() - 0.5) * 0.4,
       vy: (Math.random() - 0.5) * 0.4,
-      color: ['#06b6d4', '#ec4899', '#eab308', '#a855f7'][Math.floor(Math.random() * 4)]
+      color: ['#06b6d4', '#ec4899', '#eab308', '#a855f7', '#10b981', '#f97316', '#3b82f6'][Math.floor(Math.random() * 7)]
     }));
 
     function animateParticles() {
