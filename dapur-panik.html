@@ -3,275 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dapur Panik - Fullscreen Arcade</title>
+    <title>Dapur Panik 3D - The Chaos Arcade</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkbg: '#090d16',
-                        neonpink: '#f43f5e',
-                        neongreen: '#10b981',
-                        neonpurple: '#8b5cf6'
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #090d16;
-            color: #f8fafc;
-            font-family: system-ui, -apple-system, sans-serif;
-            touch-action: manipulation;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #05050a; font-family: sans-serif;
+            touch-action: none;
         }
     </style>
 </head>
 <body class="flex flex-col justify-between h-screen w-screen select-none">
 
-    <!-- Top Bar Minimalis -->
-    <header class="flex justify-between items-center px-4 py-3 bg-slate-900/80 border-b border-slate-800 backdrop-blur-md z-30">
-        <a href="index.html" class="text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1">
-            ← Keluar
-        </a>
+    <!-- Top UI -->
+    <header class="absolute top-0 left-0 right-0 flex justify-between items-center px-4 py-3 bg-slate-900/80 border-b border-slate-800 backdrop-blur-md z-30 pointer-events-none">
+        <a href="index.html" class="text-xs font-bold text-slate-400 hover:text-white pointer-events-auto">← Keluar</a>
         <div class="flex gap-4 text-xs font-black">
-            <span class="bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 text-neongreen">SKOR: <span id="scoreVal">0</span></span>
-            <span class="bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 text-neonpink">WAKTU: <span id="timeVal">30s</span></span>
+            <span class="text-emerald-400">SKOR: <span id="scoreVal">0</span></span>
+            <span class="text-rose-500">WAKTU: <span id="timeVal">45s</span></span>
         </div>
     </header>
 
-    <!-- Canvas Fullscreen Area -->
-    <main class="relative flex-grow flex items-center justify-center overflow-hidden w-full h-full">
-        
-        <!-- Start Menu Overlay -->
-        <div id="startOverlay" class="absolute inset-0 bg-[#090d16]/95 flex flex-col items-center justify-center p-6 text-center z-40 backdrop-blur-sm">
-            <div class="text-6xl mb-4 animate-bounce">🍳</div>
-            <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neonpink via-purple-400 to-neongreen mb-2">
-                DAPUR PANIK
-            </h1>
-            <p class="text-slate-400 text-xs md:text-sm max-w-xs mb-8">
-                Tangkap bahan makanan segar, hindari sampah secepat mungkin! Dilengkapi efek suara & animasi arcade.
-            </p>
-            <button onclick="startGame()" class="bg-gradient-to-r from-neonpink to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-neonpink/20 transition transform active:scale-95 text-base uppercase tracking-wider">
-                Mulai Main 🚀
-            </button>
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container" class="w-full h-full absolute inset-0"></div>
+
+    <!-- Start & Game Over Overlays -->
+    <div id="startOverlay" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center z-40">
+        <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-emerald-400 mb-2">
+            DAPUR PANIK 🍳
+        </h1>
+        <p class="text-slate-400 text-xs max-w-xs mb-6">
+            Kendalikan koki berkeliling ruangan dapur 3D, kumpulkan bahan masakan, dan hindari kekacauan!
+        </p>
+        <button onclick="initGame()" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg">
+            Mulai Masak 🚀
+        </button>
+    </div>
+
+    <div id="gameOverOverlay" class="absolute inset-0 bg-slate-950/90 hidden flex flex-col items-center justify-center p-6 text-center z-40">
+        <h2 class="text-3xl font-black text-rose-500 mb-2">WAKTU HABIS!</h2>
+        <p class="text-slate-300 text-sm mb-4">Skor Akhir: <span id="finalScore" class="font-bold text-emerald-400">0</span></p>
+        <button onclick="initGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2.5 rounded-xl">
+            Main Lagi 🔄
+        </button>
+    </div>
+
+    <!-- Mobile Virtual Joystick / Buttons -->
+    <div class="absolute bottom-6 left-6 right-6 flex justify-between items-end z-30 pointer-events-none">
+        <div class="flex gap-2 pointer-events-auto">
+            <button id="btnLeft" class="w-14 h-14 bg-slate-800/80 border border-slate-700 rounded-full text-white font-bold text-lg active:bg-slate-700">◀</button>
+            <button id="btnRight" class="w-14 h-14 bg-slate-800/80 border border-slate-700 rounded-full text-white font-bold text-lg active:bg-slate-700">▶</button>
         </div>
-
-        <!-- Game Over Overlay -->
-        <div id="gameOverOverlay" class="absolute inset-0 bg-[#090d16]/95 hidden flex flex-col items-center justify-center p-6 text-center z-40 backdrop-blur-sm">
-            <div class="text-6xl mb-3">💥</div>
-            <h2 class="text-3xl font-black text-neonpink mb-1">WAKTU HABIS!</h2>
-            <p class="text-slate-300 text-sm mb-6">Skor Akhir Kamu: <span id="finalScore" class="font-black text-neongreen text-xl">0</span></p>
-            <button onclick="startGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8 py-3 rounded-xl transition shadow-lg active:scale-95">
-                Main Lagi 🔄
-            </button>
+        <div class="flex gap-2 pointer-events-auto">
+            <button id="btnUp" class="w-14 h-14 bg-slate-800/80 border border-slate-700 rounded-full text-white font-bold text-lg active:bg-slate-700">▲</button>
+            <button id="btnDown" class="w-14 h-14 bg-slate-800/80 border border-slate-700 rounded-full text-white font-bold text-lg active:bg-slate-700">▼</button>
         </div>
+    </div>
 
-        <!-- Canvas Mengisi Seluruh Layar (Fullscreen) -->
-        <canvas id="gameCanvas" class="absolute inset-0 w-full h-full block cursor-crosshair"></canvas>
-    </main>
-
-    <!-- Sound & Game Logic Engine -->
+    <!-- Script Game 3D Three.js -->
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        let scene, camera, renderer, player;
+        let score = 0, timeLeft = 45, isPlaying = false;
+        let gameTimer, itemSpawner;
+        let collectibles = [];
+        let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, KeyW: false, KeyS: false, KeyA: false, KeyD: false };
 
-        // Auto Resize Canvas agar selalu Fullscreen pas di HP/Tablet/Laptop
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight - 60; // Kurangi tinggi header
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        let score = 0;
-        let timeLeft = 30;
-        let isPlaying = false;
-        let gameTimer = null;
-        let spawnerTimer = null;
-        let items = [];
-        let particles = []; // Efek partikel ledakan saat diklik
-
-        const scoreVal = document.getElementById('scoreVal');
-        const timeVal = document.getElementById('timeVal');
-        const startOverlay = document.getElementById('startOverlay');
-        const gameOverOverlay = document.getElementById('gameOverOverlay');
-        const finalScore = document.getElementById('finalScore');
-
-        // Web Audio API untuk Efek Suara Tanpa File Eksternal
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            if (type === 'good') {
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'bad') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.2);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.2);
-            }
-        }
-
-        function startGame() {
+        function initGame() {
+            document.getElementById('startOverlay').classList.add('hidden');
+            document.getElementById('gameOverOverlay').classList.add('hidden');
+            
             score = 0;
-            timeLeft = 30;
-            items = [];
-            particles = [];
-            scoreVal.textContent = score;
-            timeVal.textContent = timeLeft + 's';
-            startOverlay.classList.add('hidden');
-            gameOverOverlay.classList.add('hidden');
-            isPlaying = true;
+            timeLeft = 45;
+            document.getElementById('scoreVal').textContent = score;
+            document.getElementById('timeVal').textContent = timeLeft + 's';
 
+            collectibles.forEach(item => scene.remove(item.mesh));
+            collectibles = [];
+
+            if (!scene) {
+                setupThreeJS();
+            }
+
+            isPlaying = true;
             if (gameTimer) clearInterval(gameTimer);
             gameTimer = setInterval(() => {
                 timeLeft--;
-                timeVal.textContent = timeLeft + 's';
+                document.getElementById('timeVal').textContent = timeLeft + 's';
                 if (timeLeft <= 0) endGame();
             }, 1000);
 
-            if (spawnerTimer) clearInterval(spawnerTimer);
-            spawnerTimer = setInterval(() => {
-                if (!isPlaying) return;
-                spawnItem();
-            }, 500);
-
-            loop();
+            if (itemSpawner) clearInterval(itemSpawner);
+            itemSpawner = setInterval(spawnItem3D, 1200);
         }
 
-        function spawnItem() {
-            const isBad = Math.random() < 0.25;
-            const emojis = isBad ? ['🗑️', '💀', '🧦'] : ['🍔', '🍕', '🌭', '🥤', '🍗'];
+        function setupThreeJS() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x090d16);
+            scene.fog = new THREE.FogExp2(0x090d16, 0.05);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             
-            items.push({
-                x: Math.random() * (canvas.width - 80) + 40,
-                y: -50,
-                vy: 3 + Math.random() * 3,
-                size: 36,
-                emoji: emojis[Math.floor(Math.random() * emojis.length)],
-                isBad: isBad,
-                angle: 0,
-                spin: (Math.random() - 0.5) * 0.05
-            });
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xf43f5e, 1, 50);
+            pointLight.position.set(0, 10, 0);
+            scene.add(pointLight);
+
+            const floorGeo = new THREE.PlaneGeometry(30, 30);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            scene.add(floor);
+
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+            const wall1 = new THREE.Mesh(new THREE.BoxGeometry(30, 10, 1), wallMat);
+            wall1.position.set(0, 5, -15);
+            scene.add(wall1);
+
+            const wall2 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 30), wallMat);
+            wall2.position.set(-15, 5, 0);
+            scene.add(wall2);
+
+            const wall3 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 30), wallMat);
+            wall3.position.set(15, 5, 0);
+            scene.add(wall3);
+
+            const playerGeo = new THREE.BoxGeometry(1, 2, 1);
+            const playerMat = new THREE.MeshStandardMaterial({ color: 0x10b981 });
+            player = new THREE.Mesh(playerGeo, playerMat);
+            player.position.set(0, 1, 0);
+            scene.add(player);
+
+            window.addEventListener('keydown', (e) => { if (keys.hasOwnProperty(e.code)) keys[e.code] = true; });
+            window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
+
+            bindTouch('btnUp', 'KeyW');
+            bindTouch('btnDown', 'KeyS');
+            bindTouch('btnLeft', 'KeyA');
+            bindTouch('btnRight', 'KeyD');
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
         }
 
-        // Deteksi klik / sentuh layar di seluruh area canvas fullscreen
-        canvas.addEventListener('pointerdown', (e) => {
-            if (!isPlaying) return;
-            const rect = canvas.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const clickY = e.clientY - rect.top;
+        function bindTouch(elementId, keyCode) {
+            const el = document.getElementById(elementId);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyCode] = true; });
+            el.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyCode] = false; });
+            el.addEventListener('mousedown', () => keys[keyCode] = true);
+            el.addEventListener('mouseup', () => keys[keyCode] = false);
+        }
 
-            for (let i = items.length - 1; i >= 0; i--) {
-                let item = items[i];
-                let dist = Math.hypot(item.x - clickX, item.y - clickY);
-                
-                if (dist < item.size) {
+        function spawnItem3D() {
+            if (!isPlaying) return;
+            const geo = new THREE.SphereGeometry(0.6, 16, 16);
+            const isBad = Math.random() < 0.3;
+            const mat = new THREE.MeshStandardMaterial({ color: isBad ? 0xf43f5e : 0xeab308, emissive: isBad ? 0x500000 : 0x504000 });
+            const mesh = new THREE.Mesh(geo, mat);
+
+            mesh.position.set(
+                (Math.random() - 0.5) * 24,
+                0.6,
+                (Math.random() - 0.5) * 24
+            );
+            scene.add(mesh);
+            collectibles.push({ mesh, isBad });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!isPlaying) return;
+
+            let speed = 0.15;
+            if (keys.ArrowUp || keys.KeyW) player.position.z -= speed;
+            if (keys.ArrowDown || keys.KeyS) player.position.z += speed;
+            if (keys.ArrowLeft || keys.KeyA) player.position.x -= speed;
+            if (keys.ArrowRight || keys.KeyD) player.position.x += speed;
+
+            player.position.x = Math.max(-13, Math.min(13, player.position.x));
+            player.position.z = Math.max(-13, Math.min(13, player.position.z));
+
+            camera.position.x = player.position.x;
+            camera.position.y = player.position.y + 6;
+            camera.position.z = player.position.z + 8;
+            camera.lookAt(player.position.x, player.position.y, player.position.z - 2);
+
+            for (let i = collectibles.length - 1; i >= 0; i--) {
+                let item = collectibles[i];
+                let dist = player.position.distanceTo(item.mesh.position);
+                if (dist < 1.5) {
                     if (item.isBad) {
                         score = Math.max(0, score - 3);
-                        playSound('bad');
-                        createParticles(item.x, item.y, '#f43f5e');
                     } else {
                         score += 5;
-                        playSound('good');
-                        createParticles(item.x, item.y, '#10b981');
                     }
-                    scoreVal.textContent = score;
-                    items.splice(i, 1);
-                    break;
+                    document.getElementById('scoreVal').textContent = score;
+                    scene.remove(item.mesh);
+                    collectibles.splice(i, 1);
                 }
             }
-        });
 
-        function createParticles(x, y, color) {
-            for (let i = 0; i < 8; i++) {
-                particles.push({
-                    x: x,
-                    y: y,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8,
-                    life: 20,
-                    color: color
-                });
-            }
+            renderer.render(scene, camera);
         }
 
-        function loop() {
-            if (!isPlaying) return;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Background efek gradasi halus
-            let bgGrad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 50, canvas.width/2, canvas.height/2, canvas.width);
-            bgGrad.addColorStop(0, '#0f172a');
-            bgGrad.addColorStop(1, '#090d16');
-            ctx.fillStyle = bgGrad;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Update & Render Partikel Ledakan
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.life--;
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-                ctx.fill();
-                if (p.life <= 0) particles.splice(i, 1);
-            }
-
-            // Update & Render Item Game
-            for (let i = items.length - 1; i >= 0; i--) {
-                let item = items[i];
-                item.y += item.vy;
-                item.angle += item.spin;
-
-                ctx.save();
-                ctx.translate(item.x, item.y);
-                ctx.rotate(item.angle);
-                ctx.font = `${item.size}px sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(item.emoji, 0, 0);
-                ctx.restore();
-
-                // Hapus jika keluar layar bawah
-                if (item.y > canvas.height + 60) {
-                    items.splice(i, 1);
-                }
-            }
-
-            requestAnimationFrame(loop);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
         function endGame() {
             isPlaying = false;
             clearInterval(gameTimer);
-            clearInterval(spawnerTimer);
-            finalScore.textContent = score;
-            gameOverOverlay.classList.remove('hidden');
+            clearInterval(itemSpawner);
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOverOverlay').classList.remove('hidden');
         }
     </script>
 </body>
