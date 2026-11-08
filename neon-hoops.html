@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Basketball Arcade</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0c1017;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas {
+            display: block;
+            background: #0c1017;
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.15);
+            border-radius: 12px;
+            touch-action: none;
+            cursor: pointer;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(12, 16, 23, 0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+        .hidden {
+            display: none !important;
+        }
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 26px;
+            color: #00f3ff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        p {
+            margin: 0 0 20px 0;
+            font-size: 14px;
+            color: #a0aab5;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .btn {
+            background: transparent;
+            border: 2px solid #00f3ff;
+            color: #00f3ff;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn:hover {
+            background: #00f3ff;
+            color: #0c1017;
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.8);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="start-screen" class="overlay">
+            <h1>NEON BASKETBALL</h1>
+            <p>Drag back and release to shoot the ball. Score as many baskets as you can before time runs out!</p>
+            <button class="btn" id="start-btn">TAP TO PLAY</button>
+        </div>
+
+        <div id="gameover-screen" class="overlay hidden">
+            <h1>TIME'S UP!</h1>
+            <p id="final-score-text" style="font-size: 18px; color: #fff; margin-bottom: 5px;">SCORE: 0</p>
+            <p id="final-high-text" style="font-size: 14px; color: #ff00ff; margin-bottom: 25px; text-shadow: 0 0 8px rgba(255,0,255,0.4);">HIGH SCORE: 0</p>
+            <button class="btn" id="restart-btn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const startScreen = document.getElementById("start-screen");
+        const gameOverScreen = document.getElementById("gameover-screen");
+        const startBtn = document.getElementById("start-btn");
+        const restartBtn = document.getElementById("restart-btn");
+        const finalScoreText = document.getElementById("final-score-text");
+        const finalHighText = document.getElementById("final-high-text");
+
+        let gameWidth = 400;
+        let gameHeight = 600;
+
+        function resizeGame() {
+            gameWidth = 400;
+            gameHeight = Math.min(window.innerHeight * 0.75, 600);
+            canvas.width = gameWidth;
+            canvas.height = gameHeight;
+
+            if (basket) {
+                basket.x = gameWidth - 70;
+            }
+            if (ball && !ball.isDragging && !ball.isFlying) {
+                resetBall();
+            }
+        }
+
+        window.addEventListener("resize", resizeGame);
+
+        let gameState = "START"; 
+        let score = 0;
+        let highScore = localStorage.getItem("neon_basket_highscore") || 0;
+        let timeLeft = 60;
+        let timerInterval = null;
+
+        const gravity = 0.45;
+        let particles = [];
+        let floatTexts = [];
+
+        const ball = {
+            x: 80,
+            y: 0,
+            radius: 18,
+            vx: 0,
+            vy: 0,
+            isDragging: false,
+            isFlying: false,
+            trail: []
+        };
+
+        const basket = {
+            x: 0,
+            y: 180,
+            width: 55,
+            rimRadius: 5,
+            backboardWidth: 12,
+            backboardHeight: 80,
+            scored: false,
+            netAnimation: 0
+        };
+
+        let dragStart = { x: 0, y: 0 };
+        let dragCurrent = { x: 0, y: 0 };
+
+        function resetBall() {
+            ball.x = 80;
+            ball.y = gameHeight - 100;
+            ball.vx = 0;
+            ball.vy = 0;
+            ball.isDragging = false;
+            ball.isFlying = false;
+            ball.trail = [];
+            basket.scored = false;
+        }
+
+        function initGame() {
+            resizeGame();
+            score = 0;
+            timeLeft = 60;
+            particles = [];
+            floatTexts = [];
+            basket.y = gameHeight * 0.3;
+            resetBall();
+        }
+
+        function startGame() {
+            initGame();
+            gameState = "PLAYING";
+            startScreen.classList.add("hidden");
+            gameOverScreen.classList.add("hidden");
+
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (gameState === "PLAYING") {
+                    timeLeft--;
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            gameState = "GAMEOVER";
+            clearInterval(timerInterval);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem("neon_basket_highscore", highScore);
+            }
+            finalScoreText.textContent = `SCORE: ${score}`;
+            finalHighText.textContent = `HIGH SCORE: ${highScore}`;
+            gameOverScreen.classList.remove("hidden");
+        }
+
+        function randomizeBasket() {
+            const minHeight = gameHeight * 0.2;
+            const maxHeight = gameHeight * 0.5;
+            basket.y = minHeight + Math.random() * (maxHeight - minHeight);
+            basket.scored = false;
+        }
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 25; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 6 + 2;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: Math.random() * 3 + 1,
+                    color: color,
+                    alpha: 1,
+                    decay: Math.random() * 0.03 + 0.015
+                });
+            }
+        }
+
+        function addFloatText(text, x, y) {
+            floatTexts.push({
+                text: text,
+                x: x,
+                y: y,
+                alpha: 1,
+                vy: -1.5
+            });
+        }
+
+        function getTouchPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        canvas.addEventListener("mousedown", handleTouchStart);
+        canvas.addEventListener("mousemove", handleTouchMove);
+        canvas.addEventListener("mouseup", handleTouchEnd);
+
+        canvas.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            handleTouchStart(e);
+        }, { passive: false });
+
+        canvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            handleTouchMove(e);
+        }, { passive: false });
+
+        canvas.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            handleTouchEnd(e);
+        }, { passive: false });
+
+        function handleTouchStart(e) {
+            if (gameState !== "PLAYING" || ball.isFlying) return;
+            const pos = getTouchPos(e);
+            
+            const dist = Math.hypot(pos.x - ball.x, pos.y - ball.y);
+            if (dist < ball.radius * 2.5) {
+                ball.isDragging = true;
+                dragStart = { x: ball.x, y: ball.y };
+                dragCurrent = { x: pos.x, y: pos.y };
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (!ball.isDragging) return;
+            const pos = getTouchPos(e);
+            dragCurrent = { x: pos.x, y: pos.y };
+        }
+
+        function handleTouchEnd() {
+            if (!ball.isDragging) return;
+            ball.isDragging = false;
+
+            const dx = dragStart.x - dragCurrent.x;
+            const dy = dragStart.y - dragCurrent.y;
+
+            const powerMultiplier = 0.18;
+            ball.vx = dx * powerMultiplier;
+            ball.vy = dy * powerMultiplier;
+
+            if (ball.vx === 0 && ball.vy === 0) {
+                ball.vy = -5;
+            }
+
+            ball.isFlying = true;
+        }
+
+        function update() {
+            if (gameState === "PLAYING") {
+                if (ball.isFlying) {
+                    ball.vy += gravity;
+                    ball.x += ball.vx;
+                    ball.y += ball.vy;
+
+                    ball.trail.push({ x: ball.x, y: ball.y });
+                    if (ball.trail.length > 10) ball.trail.shift();
+
+                    const rimLeftX = basket.x - basket.width / 2;
+                    const rimRightX = basket.x + basket.width / 2;
+                    const rimY = basket.y;
+
+                    const distToLeftRim = Math.hypot(ball.x - rimLeftX, ball.y - rimY);
+                    if (distToLeftRim < ball.radius + basket.rimRadius) {
+                        ball.vx = -ball.vx * 0.6;
+                        ball.vy = -ball.vy * 0.6;
+                        ball.x = rimLeftX - (ball.radius + basket.rimRadius);
+                    }
+
+                    const distToRightRim = Math.hypot(ball.x - rimRightX, ball.y - rimY);
+                    if (distToRightRim < ball.radius + basket.rimRadius) {
+                        ball.vx = -ball.vx * 0.6;
+                        ball.vy = -ball.vy * 0.6;
+                        ball.x = rimRightX + (ball.radius + basket.rimRadius);
+                    }
+
+                    const backboardX = basket.x + basket.width / 2 + 10;
+                    const backboardTop = basket.y - basket.backboardHeight / 2;
+                    const backboardBottom = basket.y + basket.backboardHeight / 2;
+
+                    if (ball.x + ball.radius >= backboardX &&
+                        ball.y >= backboardTop &&
+                        ball.y <= backboardBottom &&
+                        ball.vx > 0) {
+                        ball.vx = -ball.vx * 0.5;
+                        ball.x = backboardX - ball.radius;
+                    }
+
+                    const netCheckY = basket.y + 10;
+                    if (!basket.scored && ball.vy > 0 &&
+                        ball.x > rimLeftX && ball.x < rimRightX &&
+                        ball.y > rimY && ball.y < netCheckY) {
+                        basket.scored = true;
+                        score += 10;
+                        basket.netAnimation = 15;
+                        createParticles(basket.x, basket.y, "#00f3ff");
+                        addFloatText("+10 POINTS!", basket.x - 35, basket.y - 20);
+                        setTimeout(randomizeBasket, 400);
+                    }
+
+                    if (ball.y > gameHeight + 50 || ball.x < -50 || ball.x > gameWidth + 50) {
+                        resetBall();
+                    }
+                }
+
+                if (basket.netAnimation > 0) {
+                    basket.netAnimation--;
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= p.decay;
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            for (let i = floatTexts.length - 1; i >= 0; i--) {
+                let ft = floatTexts[i];
+                ft.y += ft.vy;
+                ft.alpha -= 0.02;
+                if (ft.alpha <= 0) {
+                    floatTexts.splice(i, 1);
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, gameWidth, gameHeight);
+
+            ctx.strokeStyle = "rgba(0, 243, 255, 0.05)";
+            ctx.lineWidth = 1;
+            for (let i = 0; i < gameWidth; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, gameHeight);
+                ctx.stroke();
+            }
+            for (let i = 0; i < gameHeight; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(gameWidth, i);
+                ctx.stroke();
+            }
+
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#ff00ff";
+            ctx.strokeStyle = "#ff00ff";
+            ctx.lineWidth = 4;
+            const backboardX = basket.x + basket.width / 2 + 10;
+            const backboardTop = basket.y - basket.backboardHeight / 2;
+            ctx.beginPath();
+            ctx.rect(backboardX, backboardTop, basket.backboardHeight, basket.backboardHeight);
+            ctx.stroke();
+
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#00f3ff";
+            ctx.strokeStyle = "#00f3ff";
+            ctx.lineWidth = 4;
+            const rimLeftX = basket.x - basket.width / 2;
+            const rimRightX = basket.x + basket.width / 2;
+            
+            ctx.beginPath();
+            ctx.arc(rimLeftX, basket.y, basket.rimRadius, 0, Math.PI * 2);
+            ctx.arc(rimRightX, basket.y, basket.rimRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#ff0055";
+            ctx.shadowColor = "#ff0055";
+            ctx.fill();
+
+            ctx.strokeStyle = "rgba(0, 243, 255, 0.7)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            let netSway = Math.sin(basket.netAnimation * 0.8) * 6;
+            ctx.moveTo(rimLeftX, basket.y);
+            ctx.lineTo(rimLeftX + 10 + netSway, basket.y + 35);
+            ctx.lineTo(rimRightX - 10 + netSway, basket.y + 35);
+            ctx.lineTo(rimRightX, basket.y);
+            ctx.stroke();
+
+            if (ball.isDragging) {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = "#ffff00";
+                ctx.strokeStyle = "#ffff00";
+                ctx.lineWidth = 3;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(ball.x, ball.y);
+                const pullX = ball.x + (dragStart.x - dragCurrent.x);
+                const pullY = ball.y + (dragStart.y - dragCurrent.y);
+                ctx.lineTo(pullX, pullY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            for (let t of ball.trail) {
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, ball.radius * 0.6, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(255, 100, 0, 0.25)";
+                ctx.shadowBlur = 0;
+                ctx.fill();
+            }
+
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#ff5500";
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#ff6600";
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            for (let p of particles) {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = p.color;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            for (let ft of floatTexts) {
+                ctx.save();
+                ctx.globalAlpha = ft.alpha;
+                ctx.font = "bold 18px Arial";
+                ctx.fillStyle = "#00f3ff";
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = "#00f3ff";
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            }
+
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "#00f3ff";
+            ctx.font = "bold 16px 'Segoe UI'";
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(`SCORE: ${score}`, 20, 35);
+            ctx.fillText(`TIME: ${timeLeft}s`, gameWidth - 110, 35);
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        startBtn.addEventListener("click", startGame);
+        restartBtn.addEventListener("click", startGame);
+
+        resizeGame();
+        loop();
+    </script>
+</body>
+</html>
