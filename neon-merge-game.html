@@ -95,8 +95,8 @@
     </div>
   </header>
 
-  <!-- Game Canvas Container (Fixed Safe Height to Prevent Bottom Overflow) -->
-  <main id="canvasContainer" class="relative w-full max-w-lg h-[72vh] my-1 rounded-2xl overflow-hidden glass-panel border border-white/10 flex justify-center items-center shrink-0">
+  <!-- Game Canvas Container (Optimized Height to Fit Viewport Safely) -->
+  <main id="canvasContainer" class="relative w-full max-w-lg h-[58vh] my-1 rounded-2xl overflow-hidden glass-panel border border-white/10 flex justify-center items-center shrink-0">
     <canvas id="gameCanvas"></canvas>
 
     <!-- Start Overlay Screen -->
@@ -322,9 +322,9 @@
     let bricks = [];
     const BRICK_ROWS = 5;
     const BRICK_COLS = 7;
-    const BRICK_HEIGHT = 18;
-    const BRICK_PADDING = 5;
-    const BRICK_TOP_OFFSET = 35;
+    const BRICK_HEIGHT = 16;
+    const BRICK_PADDING = 4;
+    const BRICK_TOP_OFFSET = 30;
 
     const BRICK_TIERS = {
       3: { fill: '#ef4444', glow: '#dc2626', score: 30 },
@@ -344,7 +344,7 @@
       const rect = canvasContainer.getBoundingClientRect();
       canvas.width = rect.width;
       canvas.height = rect.height;
-      paddle.y = canvas.height - 25;
+      paddle.y = canvas.height - 35; // Paddle safely positioned higher from bottom edge
     }
 
     function initGame() {
@@ -371,7 +371,7 @@
         y: paddle.y - 12,
         vx: (Math.random() - 0.5) * 5,
         vy: -5.5,
-        radius: 6.5,
+        radius: 6,
         trail: []
       }];
     }
@@ -424,7 +424,7 @@
           balls.push({
             x: paddle.x + paddle.width / 2, y: paddle.y - 12,
             vx: (Math.random() - 0.5) * 7, vy: -5 - Math.random() * 2,
-            radius: 6.5, trail: []
+            radius: 6, trail: []
           });
         }
         floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 15, 'MULTI!', '#f59e0b'));
