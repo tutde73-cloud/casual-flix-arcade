@@ -65,26 +65,21 @@
       text-shadow: 0 0 10px rgba(234, 179, 8, 0.8), 0 0 20px rgba(234, 179, 8, 0.4);
     }
 
-    /* Strict fit to screen wrapper rules */
-    #canvasContainer {
-      width: 100%;
-      max-width: 440px;
-      max-height: 72vh;
-      aspect-ratio: 9 / 16;
-      object-fit: contain;
-    }
-
+    /* Strict CSS rules for canvas sizing and overflow prevention */
     canvas {
+      max-height: 80vh !important;
+      max-width: 95vw !important;
       display: block;
-      width: 100%;
-      height: 100%;
+      margin: 0 auto;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(142, 224, 189, 0.2);
     }
   </style>
 </head>
 <body class="p-2">
 
   <!-- HUD Header -->
-  <header class="w-full max-w-[440px] glass-panel rounded-2xl p-2.5 flex justify-between items-center z-10 shadow-lg shrink-0">
+  <header class="w-full max-w-[400px] glass-panel rounded-2xl p-2.5 flex justify-between items-center z-10 shadow-lg shrink-0">
     <div class="flex items-center space-x-3">
       <div>
         <p class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Score</p>
@@ -113,8 +108,8 @@
     </div>
   </header>
 
-  <!-- Game Canvas Container (Fully Responsive & Fit to Screen) -->
-  <main id="canvasContainer" class="relative my-auto rounded-3xl overflow-hidden glass-panel border border-white/10 flex justify-center items-center shadow-2xl">
+  <!-- Game Canvas Container -->
+  <main id="canvasContainer" class="relative my-auto rounded-3xl overflow-hidden flex justify-center items-center">
     <canvas id="gameCanvas"></canvas>
 
     <!-- Start Overlay Screen -->
@@ -359,13 +354,12 @@
     let lastLaserShot = 0;
 
     function resizeCanvas() {
-      // Dynamic Responsive Canvas Scaling via window measurements
-      const rect = canvasContainer.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
+      // Strictly requested canvas initialization rules
+      canvas.width = 400;
+      canvas.height = Math.min(window.innerHeight * 0.8, 600);
       
-      // Dynamic Paddle Y Positioning based strictly on canvas height
-      paddle.y = canvas.height - 40;
+      // Strictly requested paddle Y formula rule
+      paddle.y = canvas.height - 50;
     }
 
     function initGame() {
@@ -471,11 +465,11 @@
       paddle.targetX = (clientX - rect.left) * scaleX - paddle.width / 2;
     }
 
-    canvasContainer.addEventListener('mousemove', (e) => updatePaddlePosition(e.clientX));
-    canvasContainer.addEventListener('touchmove', (e) => {
+    canvas.addEventListener('mousemove', (e) => updatePaddlePosition(e.clientX));
+    canvas.addEventListener('touchmove', (e) => {
       if (e.touches.length > 0) updatePaddlePosition(e.touches[0].clientX);
     });
-    canvasContainer.addEventListener('pointerdown', () => { if (gameState === 'PLAYING') fireLasers(); });
+    canvas.addEventListener('pointerdown', () => { if (gameState === 'PLAYING') fireLasers(); });
 
     window.addEventListener('keydown', (e) => { if (e.code === 'Space' && gameState === 'PLAYING') fireLasers(); });
 
