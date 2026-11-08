@@ -188,7 +188,6 @@
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
 
-        // Low impact thud
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
 
@@ -204,12 +203,11 @@
         osc.start(now);
         osc.stop(now + 0.15);
 
-        // Chime for perfect fit
         if (isPerfect) {
           const chimeOsc = this.ctx.createOscillator();
           const chimeGain = this.ctx.createGain();
 
-          const pitch = 523.25 * Math.pow(1.05946, Math.min(combo * 2, 16)); // Pitch scales with combo
+          const pitch = 523.25 * Math.pow(1.05946, Math.min(combo * 2, 16));
           chimeOsc.type = 'sine';
           chimeOsc.frequency.setValueAtTime(pitch, now);
           chimeOsc.frequency.exponentialRampToValueAtTime(pitch * 1.2, now + 0.25);
@@ -304,17 +302,15 @@
       }
     }
 
-    // --- Neon Colors Preset Palette ---
     const NEON_PALETTE = [
-      { fill: '#06b6d4', glow: '#0891b2' }, // Cyan
-      { fill: '#ec4899', glow: '#db2777' }, // Pink
-      { fill: '#a3e635', glow: '#65a30d' }, // Lime
-      { fill: '#f59e0b', glow: '#d97706' }, // Gold
-      { fill: '#8b5cf6', glow: '#7c3aed' }, // Purple
-      { fill: '#3b82f6', glow: '#2563eb' }  // Blue
+      { fill: '#06b6d4', glow: '#0891b2' },
+      { fill: '#ec4899', glow: '#db2777' },
+      { fill: '#a3e635', glow: '#65a30d' },
+      { fill: '#f59e0b', glow: '#d97706' },
+      { fill: '#8b5cf6', glow: '#7c3aed' },
+      { fill: '#3b82f6', glow: '#2563eb' }
     ];
 
-    // --- Game Variables ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const canvasContainer = document.getElementById('canvasContainer');
@@ -334,42 +330,36 @@
     const finalScoreEl = document.getElementById('finalScoreEl');
     const bestScoreEl = document.getElementById('bestScoreEl');
 
-    let gameState = 'START'; // START, PLAYING, GAMEOVER
+    let gameState = 'START';
     let score = 0;
     let highScore = parseInt(localStorage.getItem('neon_tower_highscore')) || 0;
     let lives = 3;
     let comboCount = 0;
 
-    // Physics & Camera Settings
     const BLOCK_WIDTH = 100;
     const BLOCK_HEIGHT = 40;
     let cameraY = 0;
     let targetCameraY = 0;
 
-    // Crane Swinging Physics
     let craneAngle = 0;
     let craneSpeed = 0.035;
     let craneLength = 160;
 
-    // Stack Array & Falling Block
     let stack = [];
     let fallingBlock = null;
     let particles = [];
 
-    // Tower Swaying Spring Physics
     let towerWobbleAngle = 0;
     let towerWobbleVelocity = 0;
     const WOBBLE_STIFFNESS = 0.08;
     const WOBBLE_DAMPING = 0.88;
 
-    // --- Resize Canvas Handler ---
     function resizeCanvas() {
       const rect = canvasContainer.getBoundingClientRect();
       canvas.width = rect.width;
       canvas.height = rect.height;
     }
 
-    // --- Game Initialization ---
     function initGame() {
       score = 0;
       lives = 3;
@@ -388,7 +378,6 @@
       particles = [];
       fallingBlock = null;
 
-      // Base Foundation Block at bottom center
       const baseBlock = {
         x: canvas.width / 2 - BLOCK_WIDTH / 2,
         y: canvas.height - 80,
@@ -402,11 +391,8 @@
     }
 
     function spawnSwingingBlock() {
-      const topBlock = stack[stack.length - 1];
       const colorIndex = stack.length % NEON_PALETTE.length;
-      craneAngle = Math.random() * Math.PI * 2; // Random starting phase
-
-      // Slightly increase swing speed as height increases
+      craneAngle = Math.random() * Math.PI * 2;
       craneSpeed = 0.035 + Math.min(stack.length * 0.0015, 0.035);
 
       fallingBlock = {
@@ -424,7 +410,7 @@
       let heartsHtml = '';
       for (let i = 0; i < 3; i++) {
         if (i < lives) {
-          heartsHtml += `<span class="text-rose-500 text-lg transition-transform scale-100">❤️</span>`;
+          heartsHtml += `<span class="text-rose-500 text-lg">❤️</span>`;
         } else {
           heartsHtml += `<span class="text-slate-600 text-lg opacity-40">🖤</span>`;
         }
@@ -432,7 +418,6 @@
       livesContainer.innerHTML = heartsHtml;
     }
 
-    // --- Particle Explosions ---
     function createDustBurst(x, y, color, isPerfect = false) {
       const count = isPerfect ? 24 : 10;
       for (let i = 0; i < count; i++) {
@@ -440,7 +425,6 @@
       }
     }
 
-    // --- Flash Perfect Popup ---
     function triggerComboBanner(text, subtext) {
       comboText.textContent = text;
       comboSub.textContent = subtext;
@@ -454,14 +438,13 @@
       }, 700);
     }
 
-    // --- Game Logic Updates ---
     function releaseBlock() {
       if (gameState !== 'PLAYING' || !fallingBlock || fallingBlock.isDropped) return;
 
       sound.init();
       sound.playRelease();
       fallingBlock.isDropped = true;
-      fallingBlock.vy = 12; // Initial gravity fall velocity
+      fallingBlock.vy = 12;
     }
 
     function handleBlockLanding() {
@@ -472,7 +455,6 @@
       const offset = dropX - targetX;
       const absOffset = Math.abs(offset);
 
-      // 1. Complete Miss Check
       if (absOffset >= BLOCK_WIDTH) {
         sound.playMiss();
         lives--;
@@ -487,7 +469,6 @@
         return;
       }
 
-      // 2. Successful Placement
       const landY = topBlock.y - BLOCK_HEIGHT;
       const newBlock = {
         x: dropX,
@@ -501,11 +482,9 @@
       score++;
       scoreEl.textContent = score;
 
-      // 3. Perfect Fit Detection (< 8px offset)
       const isPerfect = absOffset < 8;
       if (isPerfect) {
         comboCount++;
-        // Lock alignment perfectly for clean towers if close
         newBlock.x = targetX;
         sound.playLand(true, comboCount);
         createDustBurst(newBlock.x + BLOCK_WIDTH / 2, landY + BLOCK_HEIGHT, newBlock.color, true);
@@ -517,12 +496,10 @@
         sound.playLand(false);
         createDustBurst(newBlock.x + (offset > 0 ? 0 : BLOCK_WIDTH), landY + BLOCK_HEIGHT, newBlock.color, false);
 
-        // Calculate dynamic stack wobble force based on offset distance & direction
         const wobbleImpulse = (offset / BLOCK_WIDTH) * 0.15;
         towerWobbleVelocity += wobbleImpulse;
       }
 
-      // 4. Update Camera Height Target
       if (stack.length > 4) {
         targetCameraY = (stack.length - 4) * BLOCK_HEIGHT;
       }
@@ -554,7 +531,6 @@
       gameOverOverlay.classList.remove('hidden');
     }
 
-    // --- Controls Listeners ---
     canvasContainer.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       if (gameState === 'PLAYING') {
@@ -585,7 +561,6 @@
       requestAnimationFrame(gameLoop);
     });
 
-    // --- Main Game Loop ---
     let lastTime = performance.now();
 
     function gameLoop(now) {
@@ -594,16 +569,13 @@
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
 
-      // 1. Smooth Camera Scroll Interpolation
       cameraY += (targetCameraY - cameraY) * 0.1;
 
-      // 2. Tower Wobble Spring Physics Update
       const springAcc = -WOBBLE_STIFFNESS * towerWobbleAngle;
       towerWobbleVelocity += springAcc;
       towerWobbleVelocity *= WOBBLE_DAMPING;
       towerWobbleAngle += towerWobbleVelocity;
 
-      // 3. Update Crane Oscillation or Falling Block
       const craneAnchorX = canvas.width / 2;
       const craneAnchorY = 60;
 
@@ -613,10 +585,10 @@
           fallingBlock.x = craneAnchorX + Math.sin(craneAngle) * (craneLength - 40) - BLOCK_WIDTH / 2;
           fallingBlock.y = craneAnchorY + craneLength - cameraY;
         } else {
-          // Falling under gravity down to current stack top Y level
           fallingBlock.y += fallingBlock.vy;
-          fallingBlock.vy += 0.6; // Gravity acceleration
+          fallingBlock.vy += 0.6;
 
+          // Perbaikan posisi jatuhnya balok agar menumpuk ke atas dengan benar
           const topBlockY = stack[stack.length - 1].y - cameraY;
           if (fallingBlock.y + BLOCK_HEIGHT >= topBlockY) {
             fallingBlock.y = topBlockY - BLOCK_HEIGHT;
@@ -625,7 +597,6 @@
         }
       }
 
-      // 4. Update Dust Burst Particles
       for (let i = particles.length - 1; i >= 0; i--) {
         particles[i].update();
         if (particles[i].alpha <= 0) {
@@ -633,17 +604,14 @@
         }
       }
 
-      // Render Scene
       render(craneAnchorX, craneAnchorY);
 
       requestAnimationFrame(gameLoop);
     }
 
-    // --- Render Loop ---
     function render(anchorX, anchorY) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // A. Render Swinging Crane Line & Hook
       ctx.save();
       if (fallingBlock && !fallingBlock.isDropped) {
         const blockCenterX = fallingBlock.x + BLOCK_WIDTH / 2;
@@ -657,7 +625,6 @@
         ctx.setLineDash([4, 4]);
         ctx.stroke();
 
-        // Crane Top Anchor Point
         ctx.beginPath();
         ctx.arc(anchorX, anchorY, 6, 0, Math.PI * 2);
         ctx.fillStyle = '#06b6d4';
@@ -667,20 +634,16 @@
       }
       ctx.restore();
 
-      // B. Render Stacked Tower Blocks with Wobble Rotation Transform
       const pivotX = canvas.width / 2;
       const pivotY = canvas.height - 80 - cameraY;
 
       ctx.save();
-      // Apply sway rotation from base stack pivot point
       ctx.translate(pivotX, pivotY);
       ctx.rotate(towerWobbleAngle);
       ctx.translate(-pivotX, -pivotY);
 
       stack.forEach((b, idx) => {
         const drawY = b.y - cameraY;
-
-        // Skip rendering if way below screen camera view
         if (drawY > canvas.height + 100) return;
 
         ctx.save();
@@ -691,7 +654,6 @@
         ctx.shadowColor = b.color.glow;
         ctx.fill();
 
-        // Inner Specular Glass Highlight
         ctx.beginPath();
         ctx.roundRect(b.x + 4, drawY + 4, b.width - 8, b.height / 2 - 2, 4);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
@@ -699,7 +661,6 @@
         ctx.restore();
       });
 
-      // Render Falling Active Block inside wobble space
       if (fallingBlock && fallingBlock.isDropped) {
         ctx.save();
         ctx.beginPath();
@@ -712,7 +673,6 @@
       }
       ctx.restore();
 
-      // Render Active Swinging Block (Outside Wobble Space before drop)
       if (fallingBlock && !fallingBlock.isDropped) {
         ctx.save();
         ctx.beginPath();
@@ -722,7 +682,6 @@
         ctx.shadowColor = fallingBlock.color.glow;
         ctx.fill();
 
-        // Inner Specular Highlight
         ctx.beginPath();
         ctx.roundRect(fallingBlock.x + 4, fallingBlock.y + 4, fallingBlock.width - 8, fallingBlock.height / 2 - 2, 4);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
@@ -730,11 +689,9 @@
         ctx.restore();
       }
 
-      // C. Render Particles
       particles.forEach(p => p.draw(ctx, cameraY));
     }
 
-    // --- Global Setup ---
     highScoreEl.textContent = highScore;
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
