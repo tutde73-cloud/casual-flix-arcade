@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Neon Tower Stack</title>
-  <!-- Tailwind CSS -->
+  <title>Neon Breakout</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap');
@@ -18,13 +18,23 @@
     }
 
     body {
-      background: radial-gradient(circle at center, #15162c 0%, #080913 100%);
+      background: radial-gradient(circle at center, #0f1026 0%, #05050d 100%);
       color: #ffffff;
-      overflow: hidden;
+      /* Mengizinkan halaman untuk bisa di-scroll dengan mulus */
+      overflow-y: auto;
+      margin: 0;
+      padding: 16px 8px;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 12px;
     }
 
     .glass-panel {
-      background: rgba(20, 24, 45, 0.75);
+      background: rgba(18, 22, 41, 0.85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -38,7 +48,7 @@
     }
 
     .glass-btn:hover {
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.5) 0%, rgba(236, 72, 153, 0.5) 100%);
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.55) 0%, rgba(236, 72, 153, 0.55) 100%);
       border-color: rgba(255, 255, 255, 0.5);
       transform: translateY(-2px);
       box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
@@ -56,244 +66,212 @@
       text-shadow: 0 0 10px rgba(234, 179, 8, 0.8), 0 0 20px rgba(234, 179, 8, 0.4);
     }
 
-    .neon-text-pink {
-      text-shadow: 0 0 10px rgba(236, 72, 153, 0.8), 0 0 20px rgba(236, 72, 153, 0.4);
-    }
-
+    /* Ukuran canvas standar yang proporsional */
     canvas {
+      width: 100%;
+      max-width: 380px;
+      height: auto;
       display: block;
+      margin: 0 auto;
+      border-radius: 16px;
     }
   </style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-between items-center p-2 sm:p-4 relative">
+<body>
 
   <!-- HUD Header -->
-  <header class="w-full max-w-md glass-panel rounded-2xl p-3 flex justify-between items-center z-10 shadow-lg">
-    <div class="flex items-center space-x-4">
+  <header class="w-full max-w-[380px] glass-panel rounded-2xl p-3 flex justify-between items-center z-10 shadow-lg shrink-0">
+    <div class="flex items-center space-x-3">
       <div>
-        <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Floors</p>
-        <p id="scoreEl" class="text-2xl font-black text-cyan-400 neon-text-cyan">0</p>
+        <p class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Score</p>
+        <p id="scoreEl" class="text-lg font-black text-cyan-400 neon-text-cyan">0</p>
       </div>
-      <div class="h-8 w-px bg-white/10"></div>
+      <div class="h-5 w-px bg-white/10"></div>
       <div>
-        <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Best</p>
-        <p id="highScoreEl" class="text-xl font-black text-amber-400 neon-text-gold">0</p>
+        <p class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">High Score</p>
+        <p id="highScoreEl" class="text-base font-black text-amber-400 neon-text-gold">0</p>
       </div>
     </div>
 
-    <!-- Health / Lives Counter -->
-    <div class="flex items-center space-x-1 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10" id="livesContainer">
-      <span class="text-rose-500 text-lg">❤️</span>
-      <span class="text-rose-500 text-lg">❤️</span>
-      <span class="text-rose-500 text-lg">❤️</span>
+    <!-- Active Power-Up Timers Bar -->
+    <div id="powerupTimerBar" class="flex items-center space-x-2"></div>
+
+    <!-- Health & Pause Controls -->
+    <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-1 bg-black/40 px-2 py-1 rounded-xl border border-white/10" id="livesContainer">
+        <span class="text-rose-500 text-xs">❤️</span>
+        <span class="text-rose-500 text-xs">❤️</span>
+        <span class="text-rose-500 text-xs">❤️</span>
+      </div>
+      <button id="pauseBtn" class="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition text-xs">
+        ⏸️
+      </button>
     </div>
   </header>
 
   <!-- Game Canvas Container -->
-  <main id="canvasContainer" class="relative w-full max-w-md flex-1 my-2 sm:my-3 rounded-3xl overflow-hidden glass-panel border border-white/10 flex justify-center items-center">
+  <main id="canvasContainer" class="relative w-full max-w-[380px] rounded-3xl overflow-hidden flex justify-center items-center shrink-0 glass-panel border border-white/10 mb-4">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Floating Perfect Flash Banner -->
-    <div id="comboBanner" class="absolute top-28 left-1/2 -translate-x-1/2 opacity-0 transition-all duration-300 pointer-events-none text-center z-10">
-      <h2 id="comboText" class="text-3xl font-black text-pink-400 neon-text-pink tracking-wider italic">
-        PERFECT!
-      </h2>
-      <p id="comboSub" class="text-xs font-bold text-amber-300 tracking-widest uppercase">+50 BONUS</p>
-    </div>
-
     <!-- Start Overlay Screen -->
-    <div id="startOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 bg-slate-950/85 backdrop-blur-md">
-      <h1 class="text-4xl sm:text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 tracking-tight">
-        NEON TOWER
+    <div id="startOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 bg-slate-950/90 backdrop-blur-md">
+      <h1 class="text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 tracking-tight">
+        NEON BREAKOUT
       </h1>
-      <p class="text-slate-300 text-xs sm:text-sm max-w-xs mb-8 leading-relaxed">
-        Stack swinging neon blocks perfectly to construct the ultimate glowing skyscraper!
+      <p class="text-slate-300 text-xs max-w-xs mb-5 leading-relaxed">
+        Smash neon bricks, catch power-up capsules, and laser your way to high score glory!
       </p>
 
-      <button id="startBtn" class="px-8 py-4 rounded-2xl glass-btn font-extrabold text-lg text-white tracking-wider uppercase">
-        Tap to Build
+      <button id="startBtn" class="px-7 py-3 rounded-2xl glass-btn font-extrabold text-sm text-white tracking-wider uppercase">
+        Start Game
       </button>
 
-      <div class="mt-8 flex items-center space-x-3 text-xs text-slate-400">
-        <span>🖱️ Click to Release</span>
+      <div class="mt-4 flex items-center space-x-3 text-xs text-slate-400">
+        <span>🖱️ Drag Mouse</span>
         <span>•</span>
-        <span>👆 Tap Screen</span>
+        <span>👆 Touch Swipe</span>
       </div>
     </div>
 
-    <!-- Game Over Overlay Screen -->
-    <div id="gameOverOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 hidden bg-black/85 backdrop-blur-md">
-      <h2 class="text-4xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]">
-        TOWER CRASHED!
+    <!-- Pause Overlay Screen -->
+    <div id="pauseOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 hidden bg-slate-950/90 backdrop-blur-md">
+      <h2 class="text-2xl font-black mb-4 text-cyan-400 neon-text-cyan">GAME PAUSED</h2>
+      <button id="resumeBtn" class="px-8 py-3 rounded-2xl glass-btn font-extrabold text-sm text-white uppercase tracking-wider">
+        Resume Game
+      </button>
+    </div>
+
+    <!-- Game Over / Win Overlay Screen -->
+    <div id="gameOverOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 hidden bg-black/90 backdrop-blur-md">
+      <h2 id="gameOverTitle" class="text-2xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]">
+        GAME OVER
       </h2>
-      <p id="newHighScoreTag" class="text-amber-400 text-xs font-bold tracking-widest uppercase mb-4 hidden neon-text-gold">
-        🏆 NEW RECORD FLOORS! 🏆
+      <p id="newHighScoreTag" class="text-amber-400 text-xs font-bold tracking-widest uppercase mb-3 hidden neon-text-gold">
+        🏆 NEW HIGH SCORE! 🏆
       </p>
 
-      <div class="glass-panel rounded-2xl p-4 w-60 mb-6 space-y-2 border border-white/10">
-        <div class="flex justify-between items-center text-sm">
-          <span class="text-slate-400">Floors Built:</span>
-          <span id="finalScoreEl" class="text-xl font-bold text-cyan-400">0</span>
+      <div class="glass-panel rounded-2xl p-3 w-52 mb-5 space-y-2 border border-white/10 text-xs">
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400">Final Score:</span>
+          <span id="finalScoreEl" class="font-bold text-cyan-400">0</span>
         </div>
-        <div class="flex justify-between items-center text-sm">
-          <span class="text-slate-400">Best Height:</span>
-          <span id="bestScoreEl" class="text-xl font-bold text-amber-400">0</span>
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400">Best Score:</span>
+          <span id="bestScoreEl" class="font-bold text-amber-400">0</span>
         </div>
       </div>
 
-      <button id="restartBtn" class="px-8 py-3.5 rounded-2xl glass-btn font-extrabold text-base text-white uppercase tracking-wider">
-        Rebuild Tower
+      <button id="restartBtn" class="px-8 py-3 rounded-2xl glass-btn font-extrabold text-sm text-white uppercase tracking-wider">
+        Play Again
       </button>
     </div>
   </main>
 
   <script>
-    // --- Synthesized Audio Engine (Web Audio API) ---
     class SoundEngine {
-      constructor() {
-        this.ctx = null;
-      }
-
+      constructor() { this.ctx = null; }
       init() {
         if (!this.ctx) {
           const AudioCtx = window.AudioContext || window.webkitAudioContext;
           this.ctx = new AudioCtx();
         }
-        if (this.ctx.state === 'suspended') {
-          this.ctx.resume();
-        }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
       }
-
-      playRelease() {
+      playBounce(isPaddle = false) {
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
-
-        gain.gain.setValueAtTime(0.2, now);
+        osc.type = isPaddle ? 'sine' : 'triangle';
+        const startFreq = isPaddle ? 420 : 300;
+        osc.frequency.setValueAtTime(startFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(startFreq * 1.4, now + 0.08);
+        gain.gain.setValueAtTime(0.25, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.08);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.08);
       }
-
-      playLand(isPerfect, combo = 1) {
-        if (!this.ctx) return;
-        const now = this.ctx.currentTime;
-
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(120, now);
-        osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
-
-        gain.gain.setValueAtTime(0.4, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.15);
-
-        if (isPerfect) {
-          const chimeOsc = this.ctx.createOscillator();
-          const chimeGain = this.ctx.createGain();
-
-          const pitch = 523.25 * Math.pow(1.05946, Math.min(combo * 2, 16));
-          chimeOsc.type = 'sine';
-          chimeOsc.frequency.setValueAtTime(pitch, now);
-          chimeOsc.frequency.exponentialRampToValueAtTime(pitch * 1.2, now + 0.25);
-
-          chimeGain.gain.setValueAtTime(0.35, now);
-          chimeGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-
-          chimeOsc.connect(chimeGain);
-          chimeGain.connect(this.ctx.destination);
-          chimeOsc.start(now + 0.02);
-          chimeOsc.stop(now + 0.27);
-        }
-      }
-
-      playMiss() {
+      playHit(hpLeft) {
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(180, now);
-        osc.frequency.linearRampToValueAtTime(70, now + 0.35);
-
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.35);
+        osc.type = 'square';
+        const baseFreq = hpLeft === 0 ? 580 : 320 + (hpLeft * 100);
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, now + 0.1);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.1);
       }
-
-      playGameOver() {
+      playPowerup() {
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
-        [200, 160, 130].forEach((freq, idx) => {
+        [440, 554.37, 659.25, 880].forEach((freq, idx) => {
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
-
-          osc.type = 'sawtooth';
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+          gain.gain.setValueAtTime(0.15, now + idx * 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.05 + 0.12);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.05); osc.stop(now + idx * 0.05 + 0.12);
+        });
+      }
+      playLaser() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(900, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.1);
+      }
+      playGameOver(isWin = false) {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const freqs = isWin ? [523.25, 659.25, 783.99, 1046.5] : [300, 250, 200, 140];
+        freqs.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = isWin ? 'triangle' : 'sawtooth';
           osc.frequency.setValueAtTime(freq, now + idx * 0.12);
-          osc.frequency.exponentialRampToValueAtTime(freq * 0.6, now + idx * 0.12 + 0.3);
-
           gain.gain.setValueAtTime(0.25, now + idx * 0.12);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.3);
-
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-
-          osc.start(now + idx * 0.12);
-          osc.stop(now + idx * 0.12 + 0.3);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.25);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.12); osc.stop(now + idx * 0.12 + 0.25);
         });
       }
     }
 
     const sound = new SoundEngine();
 
-    // --- Particle System ---
     class Particle {
-      constructor(x, y, color, isBurst = false) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        this.radius = isBurst ? Math.random() * 4 + 2 : Math.random() * 3 + 1;
-        const speed = isBurst ? 8 : 4;
-        this.vx = (Math.random() - 0.5) * speed;
-        this.vy = (Math.random() - 0.7) * speed;
+      constructor(x, y, color) {
+        this.x = x; this.y = y; this.color = color;
+        this.radius = Math.random() * 3 + 1.5;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 4 + 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
         this.alpha = 1;
-        this.decay = Math.random() * 0.03 + 0.02;
-        this.gravity = 0.15;
+        this.decay = Math.random() * 0.03 + 0.025;
       }
-
       update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.vy += this.gravity;
+        this.x += this.vx; this.y += this.vy;
+        this.vx *= 0.96; this.vy *= 0.96;
         this.alpha -= this.decay;
       }
-
-      draw(ctx, cameraY) {
+      draw(ctx) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, this.alpha);
         ctx.beginPath();
-        ctx.arc(this.x, this.y - cameraY, this.radius, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
         ctx.shadowBlur = 8;
         ctx.shadowColor = this.color;
@@ -302,14 +280,23 @@
       }
     }
 
-    const NEON_PALETTE = [
-      { fill: '#06b6d4', glow: '#0891b2' },
-      { fill: '#ec4899', glow: '#db2777' },
-      { fill: '#a3e635', glow: '#65a30d' },
-      { fill: '#f59e0b', glow: '#d97706' },
-      { fill: '#8b5cf6', glow: '#7c3aed' },
-      { fill: '#3b82f6', glow: '#2563eb' }
-    ];
+    class FloatingText {
+      constructor(x, y, text, color) {
+        this.x = x; this.y = y; this.text = text; this.color = color;
+        this.alpha = 1; this.vy = -1.5;
+      }
+      update() { this.y += this.vy; this.alpha -= 0.025; }
+      draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.font = '800 13px Outfit';
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = this.color;
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.restore();
+      }
+    }
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -318,383 +305,387 @@
     const scoreEl = document.getElementById('scoreEl');
     const highScoreEl = document.getElementById('highScoreEl');
     const livesContainer = document.getElementById('livesContainer');
-    const comboBanner = document.getElementById('comboBanner');
-    const comboText = document.getElementById('comboText');
-    const comboSub = document.getElementById('comboSub');
+    const powerupTimerBar = document.getElementById('powerupTimerBar');
 
     const startOverlay = document.getElementById('startOverlay');
+    const pauseOverlay = document.getElementById('pauseOverlay');
     const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const gameOverTitle = document.getElementById('gameOverTitle');
     const newHighScoreTag = document.getElementById('newHighScoreTag');
-    const startBtn = document.getElementById('startBtn');
-    const restartBtn = document.getElementById('restartBtn');
     const finalScoreEl = document.getElementById('finalScoreEl');
     const bestScoreEl = document.getElementById('bestScoreEl');
 
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const restartBtn = document.getElementById('restartBtn');
+
     let gameState = 'START';
     let score = 0;
-    let highScore = parseInt(localStorage.getItem('neon_tower_highscore')) || 0;
+    let highScore = parseInt(localStorage.getItem('neon_breakout_highscore')) || 0;
     let lives = 3;
-    let comboCount = 0;
 
-    const BLOCK_WIDTH = 100;
-    const BLOCK_HEIGHT = 40;
-    let cameraY = 0;
-    let targetCameraY = 0;
+    let shakeDuration = 0;
+    let shakeMagnitude = 0;
 
-    let craneAngle = 0;
-    let craneSpeed = 0.035;
-    let craneLength = 160;
+    const basePaddleWidth = 80;
+    const paddleHeight = 12;
+    let paddle = { x: 0, targetX: 0, y: 0, width: basePaddleWidth, height: paddleHeight, color: '#06b6d4' };
 
-    let stack = [];
-    let fallingBlock = null;
+    let balls = [];
+    let bricks = [];
+    const BRICK_ROWS = 5;
+    const BRICK_COLS = 7;
+    const BRICK_HEIGHT = 18;
+    const BRICK_PADDING = 4;
+    const BRICK_TOP_OFFSET = 25;
+
+    const BRICK_TIERS = {
+      3: { fill: '#ef4444', glow: '#dc2626', score: 30 },
+      2: { fill: '#a855f7', glow: '#9333ea', score: 20 },
+      1: { fill: '#06b6d4', glow: '#0891b2', score: 10 }
+    };
+
+    let powerups = [];
+    let lasers = [];
     let particles = [];
+    let floatingTexts = [];
 
-    let towerWobbleAngle = 0;
-    let towerWobbleVelocity = 0;
-    const WOBBLE_STIFFNESS = 0.08;
-    const WOBBLE_DAMPING = 0.88;
+    let activeBuffs = { widePaddle: 0, laser: 0 };
+    let lastLaserShot = 0;
 
-    function resizeCanvas() {
-      const rect = canvasContainer.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
+    // Ukuran kanvas tetap proporsional (lebar 380, tinggi 500) agar muat tanpa terpotong
+    function resizeGame() {
+        canvas.width = 380;
+        canvas.height = 500;
+        if (typeof paddle !== "undefined") {
+            paddle.y = canvas.height - 40;
+        }
     }
 
+    resizeGame();
+
     function initGame() {
-      score = 0;
-      lives = 3;
-      comboCount = 0;
-      cameraY = 0;
-      targetCameraY = 0;
-      towerWobbleAngle = 0;
-      towerWobbleVelocity = 0;
-      craneSpeed = 0.035;
+      resizeGame();
+      score = 0; lives = 3; shakeDuration = 0;
+      activeBuffs.widePaddle = 0; activeBuffs.laser = 0;
 
       scoreEl.textContent = score;
       highScoreEl.textContent = highScore;
       updateLivesUI();
 
-      stack = [];
-      particles = [];
-      fallingBlock = null;
+      paddle.width = basePaddleWidth;
+      paddle.x = canvas.width / 2 - paddle.width / 2;
+      paddle.targetX = paddle.x;
 
-      const baseBlock = {
-        x: canvas.width / 2 - BLOCK_WIDTH / 2,
-        y: canvas.height - 80,
-        width: BLOCK_WIDTH,
-        height: BLOCK_HEIGHT,
-        color: NEON_PALETTE[0]
-      };
-      stack.push(baseBlock);
+      resetBalls();
+      createBrickGrid();
 
-      spawnSwingingBlock();
+      powerups = []; lasers = []; particles = []; floatingTexts = [];
     }
 
-    function spawnSwingingBlock() {
-      const colorIndex = stack.length % NEON_PALETTE.length;
-      craneAngle = Math.random() * Math.PI * 2;
-      craneSpeed = 0.035 + Math.min(stack.length * 0.0015, 0.035);
+    function resetBalls() {
+      balls = [{
+        x: canvas.width / 2,
+        y: paddle.y - 12,
+        vx: (Math.random() - 0.5) * 5,
+        vy: -5,
+        radius: 6,
+        trail: []
+      }];
+    }
 
-      fallingBlock = {
-        isDropped: false,
-        x: 0,
-        y: 0,
-        vy: 0,
-        width: BLOCK_WIDTH,
-        height: BLOCK_HEIGHT,
-        color: NEON_PALETTE[colorIndex]
-      };
+    function createBrickGrid() {
+      bricks = [];
+      const totalPadding = (BRICK_COLS + 1) * BRICK_PADDING;
+      const brickWidth = (canvas.width - totalPadding) / BRICK_COLS;
+
+      for (let r = 0; r < BRICK_ROWS; r++) {
+        for (let c = 0; c < BRICK_COLS; c++) {
+          let hp = 1;
+          if (r === 0 || r === 1) hp = 3;
+          else if (r === 2 || r === 3) hp = 2;
+
+          const bx = BRICK_PADDING + c * (brickWidth + BRICK_PADDING);
+          const by = BRICK_TOP_OFFSET + r * (BRICK_HEIGHT + BRICK_PADDING);
+
+          bricks.push({ x: bx, y: by, width: brickWidth, height: BRICK_HEIGHT, hp, maxHp: hp, alive: true });
+        }
+      }
     }
 
     function updateLivesUI() {
       let heartsHtml = '';
       for (let i = 0; i < 3; i++) {
-        if (i < lives) {
-          heartsHtml += `<span class="text-rose-500 text-lg">❤️</span>`;
-        } else {
-          heartsHtml += `<span class="text-slate-600 text-lg opacity-40">🖤</span>`;
-        }
+        heartsHtml += i < lives ? `<span class="text-rose-500 text-xs">❤️</span>` : `<span class="text-slate-600 text-xs opacity-40">🖤</span>`;
       }
       livesContainer.innerHTML = heartsHtml;
     }
 
-    function createDustBurst(x, y, color, isPerfect = false) {
-      const count = isPerfect ? 24 : 10;
-      for (let i = 0; i < count; i++) {
-        particles.push(new Particle(x, y, isPerfect ? '#ffffff' : color.fill, isPerfect));
-      }
+    function triggerScreenShake(magnitude = 4, duration = 8) {
+      shakeMagnitude = magnitude; shakeDuration = duration;
     }
 
-    function triggerComboBanner(text, subtext) {
-      comboText.textContent = text;
-      comboSub.textContent = subtext;
-
-      comboBanner.style.opacity = '1';
-      comboBanner.style.transform = 'translate(-50%, -10px) scale(1.1)';
-
-      setTimeout(() => {
-        comboBanner.style.opacity = '0';
-        comboBanner.style.transform = 'translate(-50%, 0px) scale(1.0)';
-      }, 700);
+    function spawnPowerup(x, y) {
+      if (Math.random() > 0.20) return;
+      const types = ['WIDE', 'MULTIBALL', 'LASER'];
+      powerups.push({ x, y, vy: 2, type: types[Math.floor(Math.random() * types.length)], radius: 9 });
     }
 
-    function releaseBlock() {
-      if (gameState !== 'PLAYING' || !fallingBlock || fallingBlock.isDropped) return;
-
-      sound.init();
-      sound.playRelease();
-      fallingBlock.isDropped = true;
-      fallingBlock.vy = 12;
-    }
-
-    function handleBlockLanding() {
-      const topBlock = stack[stack.length - 1];
-      const dropX = fallingBlock.x;
-      const targetX = topBlock.x;
-
-      const offset = dropX - targetX;
-      const absOffset = Math.abs(offset);
-
-      if (absOffset >= BLOCK_WIDTH) {
-        sound.playMiss();
-        lives--;
-        comboCount = 0;
-        updateLivesUI();
-
-        if (lives <= 0) {
-          triggerGameOver();
-        } else {
-          spawnSwingingBlock();
+    function applyPowerup(type) {
+      sound.playPowerup();
+      if (type === 'WIDE') {
+        activeBuffs.widePaddle = Date.now() + 10000;
+        paddle.width = basePaddleWidth * 1.5;
+        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 12, 'WIDE!', '#06b6d4'));
+      } else if (type === 'MULTIBALL') {
+        for (let i = 0; i < 2; i++) {
+          balls.push({
+            x: paddle.x + paddle.width / 2, y: paddle.y - 12,
+            vx: (Math.random() - 0.5) * 5, vy: -4.5 - Math.random() * 1.5,
+            radius: 6, trail: []
+          });
         }
-        return;
+        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 12, 'MULTI!', '#f59e0b'));
+      } else if (type === 'LASER') {
+        activeBuffs.laser = Date.now() + 10000;
+        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 12, 'LASER!', '#ec4899'));
       }
-
-      const landY = topBlock.y - BLOCK_HEIGHT;
-      const newBlock = {
-        x: dropX,
-        y: landY,
-        width: BLOCK_WIDTH,
-        height: BLOCK_HEIGHT,
-        color: fallingBlock.color
-      };
-
-      stack.push(newBlock);
-      score++;
-      scoreEl.textContent = score;
-
-      const isPerfect = absOffset < 8;
-      if (isPerfect) {
-        comboCount++;
-        newBlock.x = targetX;
-        sound.playLand(true, comboCount);
-        createDustBurst(newBlock.x + BLOCK_WIDTH / 2, landY + BLOCK_HEIGHT, newBlock.color, true);
-
-        const bonus = 50 * comboCount;
-        triggerComboBanner(`PERFECT x${comboCount}!`, `+${bonus} BONUS`);
-      } else {
-        comboCount = 0;
-        sound.playLand(false);
-        createDustBurst(newBlock.x + (offset > 0 ? 0 : BLOCK_WIDTH), landY + BLOCK_HEIGHT, newBlock.color, false);
-
-        const wobbleImpulse = (offset / BLOCK_WIDTH) * 0.15;
-        towerWobbleVelocity += wobbleImpulse;
-      }
-
-      if (stack.length > 4) {
-        targetCameraY = (stack.length - 4) * BLOCK_HEIGHT;
-      }
-
-      spawnSwingingBlock();
     }
 
-    function triggerGameOver() {
-      gameState = 'GAMEOVER';
-      sound.playGameOver();
-
-      let isNewHigh = false;
-      if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('neon_tower_highscore', highScore);
-        highScoreEl.textContent = highScore;
-        isNewHigh = true;
+    function fireLasers() {
+      if (Date.now() < activeBuffs.laser && Date.now() - lastLaserShot > 250) {
+        lastLaserShot = Date.now();
+        sound.playLaser();
+        lasers.push({ x: paddle.x + 8, y: paddle.y, vy: -8 });
+        lasers.push({ x: paddle.x + paddle.width - 8, y: paddle.y, vy: -8 });
       }
-
-      finalScoreEl.textContent = score;
-      bestScoreEl.textContent = highScore;
-
-      if (isNewHigh) {
-        newHighScoreTag.classList.remove('hidden');
-      } else {
-        newHighScoreTag.classList.add('hidden');
-      }
-
-      gameOverOverlay.classList.remove('hidden');
     }
 
-    canvasContainer.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      if (gameState === 'PLAYING') {
-        releaseBlock();
-      }
-    });
+    function updatePaddlePosition(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      paddle.targetX = (clientX - rect.left) * scaleX - paddle.width / 2;
+    }
 
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && gameState === 'PLAYING') {
-        releaseBlock();
-      }
+    canvas.addEventListener('mousemove', (e) => updatePaddlePosition(e.clientX));
+    canvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) updatePaddlePosition(e.touches[0].clientX);
     });
+    canvas.addEventListener('pointerdown', () => { if (gameState === 'PLAYING') fireLasers(); });
+
+    window.addEventListener('keydown', (e) => { if (e.code === 'Space' && gameState === 'PLAYING') fireLasers(); });
 
     startBtn.addEventListener('click', () => {
-      sound.init();
-      gameState = 'PLAYING';
-      startOverlay.classList.add('hidden');
-      gameOverOverlay.classList.add('hidden');
-      initGame();
-      requestAnimationFrame(gameLoop);
+      sound.init(); gameState = 'PLAYING'; startOverlay.classList.add('hidden');
+      initGame(); requestAnimationFrame(gameLoop);
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      if (gameState === 'PLAYING') { gameState = 'PAUSED'; pauseOverlay.classList.remove('hidden'); }
+    });
+
+    resumeBtn.addEventListener('click', () => {
+      if (gameState === 'PAUSED') { gameState = 'PLAYING'; pauseOverlay.classList.add('hidden'); requestAnimationFrame(gameLoop); }
     });
 
     restartBtn.addEventListener('click', () => {
-      sound.init();
-      gameState = 'PLAYING';
-      gameOverOverlay.classList.add('hidden');
-      initGame();
-      requestAnimationFrame(gameLoop);
+      sound.init(); gameState = 'PLAYING'; gameOverOverlay.classList.add('hidden');
+      initGame(); requestAnimationFrame(gameLoop);
     });
 
-    let lastTime = performance.now();
-
-    function gameLoop(now) {
+    function gameLoop() {
       if (gameState !== 'PLAYING') return;
+      update(); render();
+      requestAnimationFrame(gameLoop);
+    }
 
-      const dt = Math.min((now - lastTime) / 1000, 0.1);
-      lastTime = now;
+    function update() {
+      paddle.x += (paddle.targetX - paddle.x) * 0.25;
+      if (paddle.x < 0) paddle.x = 0;
+      if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
 
-      cameraY += (targetCameraY - cameraY) * 0.1;
+      const now = Date.now();
+      if (activeBuffs.widePaddle > 0 && now > activeBuffs.widePaddle) {
+        activeBuffs.widePaddle = 0; paddle.width = basePaddleWidth;
+      }
+      if (activeBuffs.laser > 0 && now > activeBuffs.laser) activeBuffs.laser = 0;
+      updateActiveBuffsHUD(now);
 
-      const springAcc = -WOBBLE_STIFFNESS * towerWobbleAngle;
-      towerWobbleVelocity += springAcc;
-      towerWobbleVelocity *= WOBBLE_DAMPING;
-      towerWobbleAngle += towerWobbleVelocity;
-
-      const craneAnchorX = canvas.width / 2;
-      const craneAnchorY = 60;
-
-      if (fallingBlock) {
-        if (!fallingBlock.isDropped) {
-          craneAngle += craneSpeed;
-          fallingBlock.x = craneAnchorX + Math.sin(craneAngle) * (craneLength - 40) - BLOCK_WIDTH / 2;
-          fallingBlock.y = craneAnchorY + craneLength - cameraY;
-        } else {
-          fallingBlock.y += fallingBlock.vy;
-          fallingBlock.vy += 0.6;
-
-          // Perbaikan posisi jatuhnya balok agar menumpuk ke atas dengan benar
-          const topBlockY = stack[stack.length - 1].y - cameraY;
-          if (fallingBlock.y + BLOCK_HEIGHT >= topBlockY) {
-            fallingBlock.y = topBlockY - BLOCK_HEIGHT;
-            handleBlockLanding();
+      for (let i = lasers.length - 1; i >= 0; i--) {
+        const l = lasers[i]; l.y += l.vy;
+        for (let b of bricks) {
+          if (b.alive && l.x >= b.x && l.x <= b.x + b.width && l.y >= b.y && l.y <= b.y + b.height) {
+            b.hp--; sound.playHit(b.hp);
+            createBrickParticles(l.x, l.y, BRICK_TIERS[b.maxHp].fill);
+            if (b.hp <= 0) {
+              b.alive = false; score += BRICK_TIERS[b.maxHp].score; scoreEl.textContent = score;
+              spawnPowerup(b.x + b.width / 2, b.y + b.height / 2);
+            }
+            lasers.splice(i, 1); break;
           }
         }
+        if (l.y < 0) lasers.splice(i, 1);
+      }
+
+      for (let i = balls.length - 1; i >= 0; i--) {
+        const ball = balls[i];
+        ball.trail.push({ x: ball.x, y: ball.y });
+        if (ball.trail.length > 7) ball.trail.shift();
+
+        ball.x += ball.vx; ball.y += ball.vy;
+
+        if (ball.x - ball.radius <= 0) { ball.x = ball.radius; ball.vx *= -1; sound.playBounce(false); }
+        else if (ball.x + ball.radius >= canvas.width) { ball.x = canvas.width - ball.radius; ball.vx *= -1; sound.playBounce(false); }
+        if (ball.y - ball.radius <= 0) { ball.y = ball.radius; ball.vy *= -1; sound.playBounce(false); }
+
+        if (ball.y + ball.radius >= paddle.y && ball.y - ball.radius <= paddle.y + paddle.height &&
+            ball.x >= paddle.x && ball.x <= paddle.x + paddle.width && ball.vy > 0) {
+          ball.vy *= -1.02;
+          const hitPoint = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
+          ball.vx = hitPoint * 6.5;
+          sound.playBounce(true);
+          createBrickParticles(ball.x, paddle.y, '#06b6d4');
+        }
+
+        for (let b of bricks) {
+          if (!b.alive) continue;
+          if (ball.x + ball.radius >= b.x && ball.x - ball.radius <= b.x + b.width &&
+              ball.y + ball.radius >= b.y && ball.y - ball.radius <= b.y + b.height) {
+            const prevX = ball.x - ball.vx;
+            if (prevX + ball.radius <= b.x || prevX - ball.radius >= b.x + b.width) ball.vx *= -1;
+            else ball.vy *= -1;
+
+            b.hp--; sound.playHit(b.hp); triggerScreenShake(4, 8);
+            createBrickParticles(ball.x, ball.y, BRICK_TIERS[b.maxHp].fill);
+
+            if (b.hp <= 0) {
+              b.alive = false; score += BRICK_TIERS[b.maxHp].score; scoreEl.textContent = score;
+              floatingTexts.push(new FloatingText(b.x + b.width / 2, b.y, `+${BRICK_TIERS[b.maxHp].score}`, BRICK_TIERS[b.maxHp].fill));
+              spawnPowerup(b.x + b.width / 2, b.y + b.height / 2);
+            }
+            break;
+          }
+        }
+
+        if (ball.y - ball.radius > canvas.height) balls.splice(i, 1);
+      }
+
+      if (balls.length === 0) {
+        lives--; triggerScreenShake(8, 12); updateLivesUI();
+        if (lives <= 0) endGame(false);
+        else resetBalls();
+      }
+
+      if (bricks.every(b => !b.alive)) endGame(true);
+
+      for (let i = powerups.length - 1; i >= 0; i--) {
+        const p = powerups[i]; p.y += p.vy;
+        if (p.y + p.radius >= paddle.y && p.x >= paddle.x && p.x <= paddle.x + paddle.width) {
+          applyPowerup(p.type); powerups.splice(i, 1); continue;
+        }
+        if (p.y > canvas.height + 20) powerups.splice(i, 1);
       }
 
       for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update();
-        if (particles[i].alpha <= 0) {
-          particles.splice(i, 1);
-        }
+        particles[i].update(); if (particles[i].alpha <= 0) particles.splice(i, 1);
       }
-
-      render(craneAnchorX, craneAnchorY);
-
-      requestAnimationFrame(gameLoop);
+      for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        floatingTexts[i].update(); if (floatingTexts[i].alpha <= 0) floatingTexts.splice(i, 1);
+      }
     }
 
-    function render(anchorX, anchorY) {
+    function createBrickParticles(x, y, color) {
+      for (let i = 0; i < 10; i++) particles.push(new Particle(x, y, color));
+    }
+
+    function updateActiveBuffsHUD(now) {
+      let hudHtml = '';
+      if (activeBuffs.widePaddle > now) {
+        const sec = Math.ceil((activeBuffs.widePaddle - now) / 1000);
+        hudHtml += `<span class="bg-cyan-500/20 border border-cyan-400 text-cyan-300 text-[9px] font-bold px-1.5 py-0.5 rounded-lg">W:${sec}s</span>`;
+      }
+      if (activeBuffs.laser > now) {
+        const sec = Math.ceil((activeBuffs.laser - now) / 1000);
+        hudHtml += `<span class="bg-pink-500/20 border border-pink-400 text-pink-300 text-[9px] font-bold px-1.5 py-0.5 rounded-lg">L:${sec}s</span>`;
+      }
+      powerupTimerBar.innerHTML = hudHtml;
+    }
+
+    function endGame(isWin) {
+      gameState = 'GAMEOVER'; sound.playGameOver(isWin);
+      let isNewHigh = false;
+      if (score > highScore) {
+        highScore = score; localStorage.setItem('neon_breakout_highscore', highScore);
+        highScoreEl.textContent = highScore; isNewHigh = true;
+      }
+      gameOverTitle.textContent = isWin ? 'VICTORY!' : 'GAME OVER';
+      gameOverTitle.className = isWin 
+        ? 'text-2xl font-black mb-1 text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.6)]'
+        : 'text-2xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]';
+
+      finalScoreEl.textContent = score; bestScoreEl.textContent = highScore;
+      if (isNewHigh) newHighScoreTag.classList.remove('hidden'); else newHighScoreTag.classList.add('hidden');
+      gameOverOverlay.classList.remove('hidden');
+    }
+
+    function render() {
+      ctx.save();
+      if (shakeDuration > 0) {
+        shakeDuration--;
+        ctx.translate((Math.random() - 0.5) * shakeMagnitude, (Math.random() - 0.5) * shakeMagnitude);
+      }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.save();
-      if (fallingBlock && !fallingBlock.isDropped) {
-        const blockCenterX = fallingBlock.x + BLOCK_WIDTH / 2;
-        const blockTopY = fallingBlock.y;
-
+      for (let b of bricks) {
+        if (!b.alive) continue;
+        const tier = BRICK_TIERS[b.hp];
+        ctx.save(); ctx.beginPath();
+        ctx.roundRect(b.x, b.y, b.width, b.height, 4);
+        ctx.fillStyle = tier.fill; ctx.shadowBlur = 6; ctx.shadowColor = tier.glow; ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(anchorX, anchorY);
-        ctx.lineTo(blockCenterX, blockTopY);
-        ctx.strokeStyle = 'rgba(6, 182, 212, 0.6)';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([4, 4]);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(anchorX, anchorY, 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#06b6d4';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#06b6d4';
-        ctx.fill();
+        ctx.roundRect(b.x + 2, b.y + 2, b.width - 4, b.height / 2 - 2, 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)'; ctx.fill(); ctx.restore();
       }
+
+      for (let l of lasers) {
+        ctx.save(); ctx.beginPath(); ctx.arc(l.x, l.y, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ec4899'; ctx.shadowBlur = 10; ctx.shadowColor = '#ec4899'; ctx.fill(); ctx.restore();
+      }
+
+      for (let p of powerups) {
+        ctx.save(); ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        let color = '#06b6d4', label = 'W';
+        if (p.type === 'MULTIBALL') { color = '#f59e0b'; label = 'M'; }
+        if (p.type === 'LASER') { color = '#ec4899'; label = 'L'; }
+        ctx.fillStyle = color; ctx.shadowBlur = 10; ctx.shadowColor = color; ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.font = '800 10px Outfit'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, p.x, p.y); ctx.restore();
+      }
+
+      ctx.save(); ctx.beginPath(); ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 6);
+      const paddleGlow = Date.now() < activeBuffs.laser ? '#ec4899' : '#06b6d4';
+      ctx.fillStyle = paddleGlow; ctx.shadowBlur = 12; ctx.shadowColor = paddleGlow; ctx.fill();
+      ctx.beginPath(); ctx.roundRect(paddle.x + 2, paddle.y + 1, paddle.width - 4, paddle.height / 2 - 1, 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'; ctx.fill(); ctx.restore();
+
+      for (let ball of balls) {
+        for (let i = 0; i < ball.trail.length; i++) {
+          const pt = ball.trail[i];
+          ctx.save(); ctx.beginPath();
+          ctx.arc(pt.x, pt.y, ball.radius * (i / ball.trail.length), 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(236, 72, 153, ${(i + 1) / ball.trail.length * 0.4})`; ctx.fill(); ctx.restore();
+        }
+        ctx.save(); ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 12; ctx.shadowColor = '#ec4899'; ctx.fill(); ctx.restore();
+      }
+
+      particles.forEach(p => p.draw(ctx));
+      floatingTexts.forEach(t => t.draw(ctx));
       ctx.restore();
-
-      const pivotX = canvas.width / 2;
-      const pivotY = canvas.height - 80 - cameraY;
-
-      ctx.save();
-      ctx.translate(pivotX, pivotY);
-      ctx.rotate(towerWobbleAngle);
-      ctx.translate(-pivotX, -pivotY);
-
-      stack.forEach((b, idx) => {
-        const drawY = b.y - cameraY;
-        if (drawY > canvas.height + 100) return;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.roundRect(b.x, drawY, b.width, b.height, 8);
-        ctx.fillStyle = b.color.fill;
-        ctx.shadowBlur = idx === stack.length - 1 ? 16 : 8;
-        ctx.shadowColor = b.color.glow;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.roundRect(b.x + 4, drawY + 4, b.width - 8, b.height / 2 - 2, 4);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        ctx.fill();
-        ctx.restore();
-      });
-
-      if (fallingBlock && fallingBlock.isDropped) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.roundRect(fallingBlock.x, fallingBlock.y, fallingBlock.width, fallingBlock.height, 8);
-        ctx.fillStyle = fallingBlock.color.fill;
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = fallingBlock.color.glow;
-        ctx.fill();
-        ctx.restore();
-      }
-      ctx.restore();
-
-      if (fallingBlock && !fallingBlock.isDropped) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.roundRect(fallingBlock.x, fallingBlock.y, fallingBlock.width, fallingBlock.height, 8);
-        ctx.fillStyle = fallingBlock.color.fill;
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = fallingBlock.color.glow;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.roundRect(fallingBlock.x + 4, fallingBlock.y + 4, fallingBlock.width - 8, fallingBlock.height / 2 - 2, 4);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fill();
-        ctx.restore();
-      }
-
-      particles.forEach(p => p.draw(ctx, cameraY));
     }
 
     highScoreEl.textContent = highScore;
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
   </script>
 </body>
 </html>
