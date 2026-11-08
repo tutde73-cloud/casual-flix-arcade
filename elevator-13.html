@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elevator 13 - Casual Flix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #05050a; font-family: monospace; touch-action: manipulation; }
+    </style>
+</head>
+<body class="flex flex-col justify-between h-screen w-screen select-none text-slate-100">
+
+    <header class="flex justify-between items-center px-4 py-3 bg-slate-950/90 border-b border-slate-800 backdrop-blur-md z-30">
+        <a href="index.html" class="text-xs font-bold text-slate-400 hover:text-white transition">← EXIT</a>
+        <div class="flex gap-4 text-xs font-black">
+            <span class="text-emerald-400">SCORE: <span id="scoreVal">0</span></span>
+            <span class="text-rose-500">BATTERY: <span id="batteryVal">100%</span></span>
+        </div>
+    </header>
+
+    <main class="relative flex-grow flex items-center justify-center p-4">
+        <div id="startOverlay" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center z-40">
+            <span class="text-5xl mb-3">🔦</span>
+            <h1 class="text-2xl md:text-4xl font-black text-yellow-400 mb-2">ELEVATOR 13</h1>
+            <p class="text-slate-400 text-xs max-w-xs mb-6">Punch floor codes before your flashlight runs out.</p>
+            <button onclick="startGame()" class="bg-yellow-500 text-slate-950 font-black px-8 py-3.5 rounded-xl shadow-lg active:scale-95 transition text-sm">ENTER ELEVATOR 🚪</button>
+        </div>
+
+        <div id="gameOverOverlay" class="absolute inset-0 bg-slate-950/95 hidden flex flex-col items-center justify-center p-6 text-center z-40">
+            <span class="text-5xl mb-2">💀</span>
+            <h2 class="text-2xl font-black text-rose-500 mb-1">BATTERY DEAD!</h2>
+            <p class="text-slate-300 text-xs mb-4" id="endDesc">The dark got you...</p>
+            <button onclick="startGame()" class="bg-yellow-500 text-slate-950 font-bold px-6 py-2.5 rounded-xl transition text-sm">TRY AGAIN 🔄</button>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-xs w-full shadow-2xl flex flex-col items-center">
+            <div class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-4 text-center">
+                <span class="text-[10px] uppercase text-slate-500 tracking-widest block mb-1">TARGET CODE</span>
+                <div id="targetDisplay" class="text-2xl font-black text-yellow-400 tracking-wider mb-2">--?--</div>
+                <div class="text-xs text-slate-300 bg-slate-900 py-1.5 px-3 rounded-lg border border-slate-800 inline-block">
+                    INPUT: <span id="inputDisplay" class="font-mono font-bold text-emerald-400 tracking-widest">_</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5 w-full">
+                <button onclick="pressNum('1')" class="bg-slate-800 active:bg-yellow-500 active:text-slate-950 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">1</button>
+                <button onclick="pressNum('2')" class="bg-slate-800 active:bg-yellow-500 active:text-slate-950 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">2</button>
+                <button onclick="pressNum('3')" class="bg-slate-800 active:bg-yellow-500 active:text-slate-950 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">3</button>
+                <button onclick="pressNum('4')" class="bg-slate-800 active:bg-yellow-500 active:text-slate-950 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">4</button>
+                <button onclick="pressNum('5')" class="bg-slate-800 active:bg-yellow-500 active:text-slate-950 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">5</button>
+                <button onclick="pressNum('6')" class="bg-slate-800 active:bg-yellow-500 active:text-slate-950 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">6</button>
+                <button onclick="pressNum('7')" class="bg-slate-800 active:bg-yellow-500 active:text-slate-950 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">7</button>
+                <button onclick="pressNum('8')" class="bg-slate-800 active:bg-yellow-500 active:text-slate-950 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">8</button>
+                <button onclick="pressNum('9')" class="bg-slate-800 active:bg-yellow-500 active:text-slate-950 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">9</button>
+                <button onclick="clearInput()" class="bg-rose-950/50 text-rose-400 font-bold py-3 rounded-xl text-xs transition border border-rose-900/50">DEL</button>
+                <button onclick="pressNum('0')" class="bg-slate-800 active:bg-yellow-500 active:text-slate-950 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">0</button>
+                <button onclick="submitCode()" class="bg-emerald-500 text-slate-950 font-black py-3 rounded-xl text-xs transition shadow-lg">ENTER</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let score = 0, battery = 100, targetCode = "", inputCode = "", isPlaying = false, batteryInterval = null;
+
+        function startGame() {
+            score = 0; battery = 100; updateUI();
+            document.getElementById('startOverlay').classList.add('hidden');
+            document.getElementById('gameOverOverlay').classList.add('hidden');
+            isPlaying = true; generateTarget();
+
+            if (batteryInterval) clearInterval(batteryInterval);
+            batteryInterval = setInterval(() => {
+                if (!isPlaying) return;
+                battery -= 1.2;
+                document.getElementById('batteryVal').textContent = Math.max(0, Math.floor(battery)) + '%';
+                if (battery <= 0) endGame();
+            }, 1000);
+        }
+
+        function generateTarget() {
+            inputCode = ""; document.getElementById('inputDisplay').textContent = "_";
+            targetCode = ""; for (let i = 0; i < 3; i++) targetCode += Math.floor(Math.random() * 10);
+            document.getElementById('targetDisplay').textContent = targetCode;
+        }
+
+        function pressNum(num) {
+            if (!isPlaying) return;
+            if (inputCode.length < 3) { inputCode += num; document.getElementById('inputDisplay').textContent = inputCode; }
+        }
+
+        function clearInput() { if (isPlaying) { inputCode = ""; document.getElementById('inputDisplay').textContent = "_"; } }
+
+        function submitCode() {
+            if (!isPlaying) return;
+            if (inputCode === targetCode) {
+                score += 15; battery = Math.min(100, battery + 15);
+                updateUI(); generateTarget();
+            } else {
+                battery = Math.max(0, battery - 15);
+                inputCode = ""; document.getElementById('inputDisplay').textContent = "WRONG! ❌";
+                setTimeout(() => { if(isPlaying) document.getElementById('inputDisplay').textContent = "_"; }, 500);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('scoreVal').textContent = score;
+            document.getElementById('batteryVal').textContent = Math.floor(battery) + '%';
+        }
+
+        function endGame() {
+            isPlaying = false; clearInterval(batteryInterval);
+            document.getElementById('gameOverOverlay').classList.remove('hidden');
+            document.getElementById('endDesc').textContent = `Final Score: ${score}`;
+        }
+    </script>
+</body>
+</html>
