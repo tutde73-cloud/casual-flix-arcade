@@ -21,12 +21,19 @@
       background: radial-gradient(circle at center, #0f1026 0%, #05050d 100%);
       color: #ffffff;
       overflow: hidden;
+      margin: 0;
+      padding: 0;
+      width: 100vw;
       height: 100vh;
       height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .glass-panel {
-      background: rgba(18, 22, 41, 0.8);
+      background: rgba(18, 22, 41, 0.85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -58,15 +65,26 @@
       text-shadow: 0 0 10px rgba(234, 179, 8, 0.8), 0 0 20px rgba(234, 179, 8, 0.4);
     }
 
+    /* Strict fit to screen wrapper rules */
+    #canvasContainer {
+      width: 100%;
+      max-width: 440px;
+      max-height: 72vh;
+      aspect-ratio: 9 / 16;
+      object-fit: contain;
+    }
+
     canvas {
       display: block;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-between items-center p-2 relative">
+<body class="p-2">
 
   <!-- HUD Header -->
-  <header class="w-full max-w-lg glass-panel rounded-2xl p-2 flex justify-between items-center z-10 shadow-lg shrink-0">
+  <header class="w-full max-w-[440px] glass-panel rounded-2xl p-2.5 flex justify-between items-center z-10 shadow-lg shrink-0">
     <div class="flex items-center space-x-3">
       <div>
         <p class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Score</p>
@@ -95,8 +113,8 @@
     </div>
   </header>
 
-  <!-- Game Canvas Container (Optimized Height to Fit Viewport Safely) -->
-  <main id="canvasContainer" class="relative w-full max-w-lg h-[58vh] my-1 rounded-2xl overflow-hidden glass-panel border border-white/10 flex justify-center items-center shrink-0">
+  <!-- Game Canvas Container (Fully Responsive & Fit to Screen) -->
+  <main id="canvasContainer" class="relative my-auto rounded-3xl overflow-hidden glass-panel border border-white/10 flex justify-center items-center shadow-2xl">
     <canvas id="gameCanvas"></canvas>
 
     <!-- Start Overlay Screen -->
@@ -242,7 +260,7 @@
         this.x = x; this.y = y; this.color = color;
         this.radius = Math.random() * 3 + 1.5;
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 6 + 2;
+        const speed = Math.random() * 5 + 2;
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
         this.alpha = 1;
@@ -275,7 +293,7 @@
       draw(ctx) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, this.alpha);
-        ctx.font = '800 15px Outfit';
+        ctx.font = '800 14px Outfit';
         ctx.fillStyle = this.color;
         ctx.shadowBlur = 6;
         ctx.shadowColor = this.color;
@@ -314,7 +332,7 @@
     let shakeDuration = 0;
     let shakeMagnitude = 0;
 
-    const basePaddleWidth = 90;
+    const basePaddleWidth = 85;
     const paddleHeight = 12;
     let paddle = { x: 0, targetX: 0, y: 0, width: basePaddleWidth, height: paddleHeight, color: '#06b6d4' };
 
@@ -341,13 +359,17 @@
     let lastLaserShot = 0;
 
     function resizeCanvas() {
+      // Dynamic Responsive Canvas Scaling via window measurements
       const rect = canvasContainer.getBoundingClientRect();
       canvas.width = rect.width;
       canvas.height = rect.height;
-      paddle.y = canvas.height - 35; // Paddle safely positioned higher from bottom edge
+      
+      // Dynamic Paddle Y Positioning based strictly on canvas height
+      paddle.y = canvas.height - 40;
     }
 
     function initGame() {
+      resizeCanvas();
       score = 0; lives = 3; shakeDuration = 0;
       activeBuffs.widePaddle = 0; activeBuffs.laser = 0;
 
@@ -370,7 +392,7 @@
         x: canvas.width / 2,
         y: paddle.y - 12,
         vx: (Math.random() - 0.5) * 5,
-        vy: -5.5,
+        vy: -5,
         radius: 6,
         trail: []
       }];
@@ -410,7 +432,7 @@
     function spawnPowerup(x, y) {
       if (Math.random() > 0.20) return;
       const types = ['WIDE', 'MULTIBALL', 'LASER'];
-      powerups.push({ x, y, vy: 2.2, type: types[Math.floor(Math.random() * types.length)], radius: 11 });
+      powerups.push({ x, y, vy: 2, type: types[Math.floor(Math.random() * types.length)], radius: 10 });
     }
 
     function applyPowerup(type) {
@@ -423,7 +445,7 @@
         for (let i = 0; i < 2; i++) {
           balls.push({
             x: paddle.x + paddle.width / 2, y: paddle.y - 12,
-            vx: (Math.random() - 0.5) * 7, vy: -5 - Math.random() * 2,
+            vx: (Math.random() - 0.5) * 6, vy: -4.5 - Math.random() * 1.5,
             radius: 6, trail: []
           });
         }
@@ -438,14 +460,15 @@
       if (Date.now() < activeBuffs.laser && Date.now() - lastLaserShot > 250) {
         lastLaserShot = Date.now();
         sound.playLaser();
-        lasers.push({ x: paddle.x + 8, y: paddle.y, vy: -9 });
-        lasers.push({ x: paddle.x + paddle.width - 8, y: paddle.y, vy: -9 });
+        lasers.push({ x: paddle.x + 8, y: paddle.y, vy: -8 });
+        lasers.push({ x: paddle.x + paddle.width - 8, y: paddle.y, vy: -8 });
       }
     }
 
     function updatePaddlePosition(clientX) {
       const rect = canvas.getBoundingClientRect();
-      paddle.targetX = clientX - rect.left - paddle.width / 2;
+      const scaleX = canvas.width / rect.width;
+      paddle.targetX = (clientX - rect.left) * scaleX - paddle.width / 2;
     }
 
     canvasContainer.addEventListener('mousemove', (e) => updatePaddlePosition(e.clientX));
@@ -523,7 +546,7 @@
             ball.x >= paddle.x && ball.x <= paddle.x + paddle.width && ball.vy > 0) {
           ball.vy *= -1.02;
           const hitPoint = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
-          ball.vx = hitPoint * 7;
+          ball.vx = hitPoint * 6.5;
           sound.playBounce(true);
           createBrickParticles(ball.x, paddle.y, '#06b6d4');
         }
