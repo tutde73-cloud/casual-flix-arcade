@@ -22,14 +22,15 @@
       color: #ffffff;
       overflow: hidden;
       margin: 0;
-      padding: 0;
+      padding: 4px;
       width: 100vw;
       height: 100vh;
       height: 100dvh;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
+      gap: 6px;
     }
 
     .glass-panel {
@@ -65,28 +66,29 @@
       text-shadow: 0 0 10px rgba(234, 179, 8, 0.8), 0 0 20px rgba(234, 179, 8, 0.4);
     }
 
-    /* Kunci ukuran canvas agar tidak meluber keluar dari batas pandang Safari/Mobile */
+    /* Kunci ukuran canvas agar aman dari potongan bawah Safari */
     canvas {
-      max-height: 75vh !important;
+      max-height: 65vh !important;
       max-width: 95vw !important;
       display: block;
       margin: 0 auto;
+      border-radius: 16px;
     }
   </style>
 </head>
-<body class="p-2">
+<body>
 
   <!-- HUD Header -->
-  <header class="w-full max-w-[400px] glass-panel rounded-2xl p-2.5 flex justify-between items-center z-10 shadow-lg shrink-0">
+  <header class="w-full max-w-[380px] glass-panel rounded-2xl p-2 flex justify-between items-center z-10 shadow-lg shrink-0">
     <div class="flex items-center space-x-3">
       <div>
         <p class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Score</p>
-        <p id="scoreEl" class="text-xl font-black text-cyan-400 neon-text-cyan">0</p>
+        <p id="scoreEl" class="text-lg font-black text-cyan-400 neon-text-cyan">0</p>
       </div>
-      <div class="h-6 w-px bg-white/10"></div>
+      <div class="h-5 w-px bg-white/10"></div>
       <div>
         <p class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">High Score</p>
-        <p id="highScoreEl" class="text-lg font-black text-amber-400 neon-text-gold">0</p>
+        <p id="highScoreEl" class="text-base font-black text-amber-400 neon-text-gold">0</p>
       </div>
     </div>
 
@@ -96,34 +98,34 @@
     <!-- Health & Pause Controls -->
     <div class="flex items-center space-x-2">
       <div class="flex items-center space-x-1 bg-black/40 px-2 py-1 rounded-xl border border-white/10" id="livesContainer">
-        <span class="text-rose-500 text-sm">❤️</span>
-        <span class="text-rose-500 text-sm">❤️</span>
-        <span class="text-rose-500 text-sm">❤️</span>
+        <span class="text-rose-500 text-xs">❤️</span>
+        <span class="text-rose-500 text-xs">❤️</span>
+        <span class="text-rose-500 text-xs">❤️</span>
       </div>
-      <button id="pauseBtn" class="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition">
+      <button id="pauseBtn" class="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition text-xs">
         ⏸️
       </button>
     </div>
   </header>
 
   <!-- Game Canvas Container -->
-  <main id="canvasContainer" class="relative my-auto rounded-3xl overflow-hidden flex justify-center items-center">
+  <main id="canvasContainer" class="relative rounded-3xl overflow-hidden flex justify-center items-center shrink-0">
     <canvas id="gameCanvas"></canvas>
 
     <!-- Start Overlay Screen -->
-    <div id="startOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 bg-slate-950/85 backdrop-blur-md">
-      <h1 class="text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 tracking-tight">
+    <div id="startOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-5 text-center z-20 bg-slate-950/90 backdrop-blur-md">
+      <h1 class="text-2xl sm:text-3xl font-black mb-1 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 tracking-tight">
         NEON BREAKOUT
       </h1>
-      <p class="text-slate-300 text-xs max-w-xs mb-5 leading-relaxed">
+      <p class="text-slate-300 text-[11px] max-w-xs mb-4 leading-relaxed">
         Smash neon bricks, catch power-up capsules, and laser your way to high score glory!
       </p>
 
-      <button id="startBtn" class="px-7 py-3 rounded-2xl glass-btn font-extrabold text-base text-white tracking-wider uppercase">
+      <button id="startBtn" class="px-6 py-2.5 rounded-2xl glass-btn font-extrabold text-sm text-white tracking-wider uppercase">
         Start Game
       </button>
 
-      <div class="mt-4 flex items-center space-x-3 text-xs text-slate-400">
+      <div class="mt-3 flex items-center space-x-3 text-[11px] text-slate-400">
         <span>🖱️ Drag Mouse</span>
         <span>•</span>
         <span>👆 Touch Swipe</span>
@@ -131,34 +133,34 @@
     </div>
 
     <!-- Pause Overlay Screen -->
-    <div id="pauseOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 hidden bg-slate-950/85 backdrop-blur-md">
-      <h2 class="text-3xl font-black mb-6 text-cyan-400 neon-text-cyan">GAME PAUSED</h2>
-      <button id="resumeBtn" class="px-8 py-3 rounded-2xl glass-btn font-extrabold text-base text-white uppercase tracking-wider">
+    <div id="pauseOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-5 text-center z-20 hidden bg-slate-950/90 backdrop-blur-md">
+      <h2 class="text-2xl font-black mb-4 text-cyan-400 neon-text-cyan">GAME PAUSED</h2>
+      <button id="resumeBtn" class="px-7 py-2.5 rounded-2xl glass-btn font-extrabold text-sm text-white uppercase tracking-wider">
         Resume Game
       </button>
     </div>
 
     <!-- Game Over / Win Overlay Screen -->
-    <div id="gameOverOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 hidden bg-black/85 backdrop-blur-md">
-      <h2 id="gameOverTitle" class="text-3xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]">
+    <div id="gameOverOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-5 text-center z-20 hidden bg-black/90 backdrop-blur-md">
+      <h2 id="gameOverTitle" class="text-2xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]">
         GAME OVER
       </h2>
-      <p id="newHighScoreTag" class="text-amber-400 text-xs font-bold tracking-widest uppercase mb-3 hidden neon-text-gold">
+      <p id="newHighScoreTag" class="text-amber-400 text-[10px] font-bold tracking-widest uppercase mb-2 hidden neon-text-gold">
         🏆 NEW HIGH SCORE! 🏆
       </p>
 
-      <div class="glass-panel rounded-2xl p-3 w-56 mb-5 space-y-2 border border-white/10">
-        <div class="flex justify-between items-center text-sm">
+      <div class="glass-panel rounded-2xl p-2.5 w-48 mb-4 space-y-1.5 border border-white/10 text-xs">
+        <div class="flex justify-between items-center">
           <span class="text-slate-400">Final Score:</span>
-          <span id="finalScoreEl" class="text-lg font-bold text-cyan-400">0</span>
+          <span id="finalScoreEl" class="font-bold text-cyan-400">0</span>
         </div>
-        <div class="flex justify-between items-center text-sm">
+        <div class="flex justify-between items-center">
           <span class="text-slate-400">Best Score:</span>
-          <span id="bestScoreEl" class="text-lg font-bold text-amber-400">0</span>
+          <span id="bestScoreEl" class="font-bold text-amber-400">0</span>
         </div>
       </div>
 
-      <button id="restartBtn" class="px-8 py-3 rounded-2xl glass-btn font-extrabold text-base text-white uppercase tracking-wider">
+      <button id="restartBtn" class="px-7 py-2.5 rounded-2xl glass-btn font-extrabold text-sm text-white uppercase tracking-wider">
         Play Again
       </button>
     </div>
@@ -286,7 +288,7 @@
       draw(ctx) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, this.alpha);
-        ctx.font = '800 14px Outfit';
+        ctx.font = '800 13px Outfit';
         ctx.fillStyle = this.color;
         ctx.shadowBlur = 6;
         ctx.shadowColor = this.color;
@@ -325,17 +327,17 @@
     let shakeDuration = 0;
     let shakeMagnitude = 0;
 
-    const basePaddleWidth = 85;
-    const paddleHeight = 12;
+    const basePaddleWidth = 80;
+    const paddleHeight = 11;
     let paddle = { x: 0, targetX: 0, y: 0, width: basePaddleWidth, height: paddleHeight, color: '#06b6d4' };
 
     let balls = [];
     let bricks = [];
     const BRICK_ROWS = 5;
     const BRICK_COLS = 7;
-    const BRICK_HEIGHT = 16;
-    const BRICK_PADDING = 4;
-    const BRICK_TOP_OFFSET = 30;
+    const BRICK_HEIGHT = 15;
+    const BRICK_PADDING = 3;
+    const BRICK_TOP_OFFSET = 25;
 
     const BRICK_TIERS = {
       3: { fill: '#ef4444', glow: '#dc2626', score: 30 },
@@ -351,16 +353,15 @@
     let activeBuffs = { widePaddle: 0, laser: 0 };
     let lastLaserShot = 0;
 
-    // Fungsi resizeGame() yang mendeteksi window.innerHeight secara real-time dan menyelaraskan posisi paddle
+    // Fungsi resizeGame() dengan faktor pengali 0.55 agar aman dari batas bawah mobile/tablet
     function resizeGame() {
-        canvas.width = 400;
-        canvas.height = Math.min(window.innerHeight * 0.75, 600);
+        canvas.width = 380;
+        canvas.height = Math.min(window.innerHeight * 0.55, 520);
         if (typeof paddle !== "undefined") {
-            paddle.y = canvas.height - 40; // Memaksa posisi paddle selalu naik 40px dari dasar area canvas yang terlihat
+            paddle.y = canvas.height - 35; // Posisi paddle dijamin naik dan terlihat jelas
         }
     }
 
-    // Panggil resizeGame() di awal serta pasang event listener resize
     resizeGame();
     window.addEventListener("resize", resizeGame);
 
@@ -386,10 +387,10 @@
     function resetBalls() {
       balls = [{
         x: canvas.width / 2,
-        y: paddle.y - 12,
+        y: paddle.y - 10,
         vx: (Math.random() - 0.5) * 5,
-        vy: -5,
-        radius: 6,
+        vy: -4.5,
+        radius: 5.5,
         trail: []
       }];
     }
@@ -416,19 +417,19 @@
     function updateLivesUI() {
       let heartsHtml = '';
       for (let i = 0; i < 3; i++) {
-        heartsHtml += i < lives ? `<span class="text-rose-500 text-sm">❤️</span>` : `<span class="text-slate-600 text-sm opacity-40">🖤</span>`;
+        heartsHtml += i < lives ? `<span class="text-rose-500 text-xs">❤️</span>` : `<span class="text-slate-600 text-xs opacity-40">🖤</span>`;
       }
       livesContainer.innerHTML = heartsHtml;
     }
 
-    function triggerScreenShake(magnitude = 5, duration = 10) {
+    function triggerScreenShake(magnitude = 4, duration = 8) {
       shakeMagnitude = magnitude; shakeDuration = duration;
     }
 
     function spawnPowerup(x, y) {
       if (Math.random() > 0.20) return;
       const types = ['WIDE', 'MULTIBALL', 'LASER'];
-      powerups.push({ x, y, vy: 2, type: types[Math.floor(Math.random() * types.length)], radius: 10 });
+      powerups.push({ x, y, vy: 2, type: types[Math.floor(Math.random() * types.length)], radius: 9 });
     }
 
     function applyPowerup(type) {
@@ -436,19 +437,19 @@
       if (type === 'WIDE') {
         activeBuffs.widePaddle = Date.now() + 10000;
         paddle.width = basePaddleWidth * 1.5;
-        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 15, 'WIDE!', '#06b6d4'));
+        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 12, 'WIDE!', '#06b6d4'));
       } else if (type === 'MULTIBALL') {
         for (let i = 0; i < 2; i++) {
           balls.push({
-            x: paddle.x + paddle.width / 2, y: paddle.y - 12,
-            vx: (Math.random() - 0.5) * 6, vy: -4.5 - Math.random() * 1.5,
-            radius: 6, trail: []
+            x: paddle.x + paddle.width / 2, y: paddle.y - 10,
+            vx: (Math.random() - 0.5) * 5, vy: -4 - Math.random() * 1.5,
+            radius: 5.5, trail: []
           });
         }
-        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 15, 'MULTI!', '#f59e0b'));
+        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 12, 'MULTI!', '#f59e0b'));
       } else if (type === 'LASER') {
         activeBuffs.laser = Date.now() + 10000;
-        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 15, 'LASER!', '#ec4899'));
+        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 12, 'LASER!', '#ec4899'));
       }
     }
 
@@ -530,7 +531,7 @@
       for (let i = balls.length - 1; i >= 0; i--) {
         const ball = balls[i];
         ball.trail.push({ x: ball.x, y: ball.y });
-        if (ball.trail.length > 7) ball.trail.shift();
+        if (ball.trail.length > 6) ball.trail.shift();
 
         ball.x += ball.vx; ball.y += ball.vy;
 
@@ -542,7 +543,7 @@
             ball.x >= paddle.x && ball.x <= paddle.x + paddle.width && ball.vy > 0) {
           ball.vy *= -1.02;
           const hitPoint = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
-          ball.vx = hitPoint * 6.5;
+          ball.vx = hitPoint * 6;
           sound.playBounce(true);
           createBrickParticles(ball.x, paddle.y, '#06b6d4');
         }
@@ -555,7 +556,7 @@
             if (prevX + ball.radius <= b.x || prevX - ball.radius >= b.x + b.width) ball.vx *= -1;
             else ball.vy *= -1;
 
-            b.hp--; sound.playHit(b.hp); triggerScreenShake(4, 8);
+            b.hp--; sound.playHit(b.hp); triggerScreenShake(3, 6);
             createBrickParticles(ball.x, ball.y, BRICK_TIERS[b.maxHp].fill);
 
             if (b.hp <= 0) {
@@ -571,7 +572,7 @@
       }
 
       if (balls.length === 0) {
-        lives--; triggerScreenShake(8, 12); updateLivesUI();
+        lives--; triggerScreenShake(6, 10); updateLivesUI();
         if (lives <= 0) endGame(false);
         else resetBalls();
       }
@@ -595,7 +596,7 @@
     }
 
     function createBrickParticles(x, y, color) {
-      for (let i = 0; i < 10; i++) particles.push(new Particle(x, y, color));
+      for (let i = 0; i < 8; i++) particles.push(new Particle(x, y, color));
     }
 
     function updateActiveBuffsHUD(now) {
@@ -620,8 +621,8 @@
       }
       gameOverTitle.textContent = isWin ? 'VICTORY!' : 'GAME OVER';
       gameOverTitle.className = isWin 
-        ? 'text-3xl font-black mb-1 text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.6)]'
-        : 'text-3xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]';
+        ? 'text-2xl font-black mb-1 text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.6)]'
+        : 'text-2xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]';
 
       finalScoreEl.textContent = score; bestScoreEl.textContent = highScore;
       if (isNewHigh) newHighScoreTag.classList.remove('hidden'); else newHighScoreTag.classList.add('hidden');
@@ -640,16 +641,16 @@
         if (!b.alive) continue;
         const tier = BRICK_TIERS[b.hp];
         ctx.save(); ctx.beginPath();
-        ctx.roundRect(b.x, b.y, b.width, b.height, 4);
-        ctx.fillStyle = tier.fill; ctx.shadowBlur = 6; ctx.shadowColor = tier.glow; ctx.fill();
+        ctx.roundRect(b.x, b.y, b.width, b.height, 3);
+        ctx.fillStyle = tier.fill; ctx.shadowBlur = 5; ctx.shadowColor = tier.glow; ctx.fill();
         ctx.beginPath();
         ctx.roundRect(b.x + 2, b.y + 2, b.width - 4, b.height / 2 - 2, 2);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)'; ctx.fill(); ctx.restore();
       }
 
       for (let l of lasers) {
-        ctx.save(); ctx.beginPath(); ctx.arc(l.x, l.y, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = '#ec4899'; ctx.shadowBlur = 10; ctx.shadowColor = '#ec4899'; ctx.fill(); ctx.restore();
+        ctx.save(); ctx.beginPath(); ctx.arc(l.x, l.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#ec4899'; ctx.shadowBlur = 8; ctx.shadowColor = '#ec4899'; ctx.fill(); ctx.restore();
       }
 
       for (let p of powerups) {
@@ -657,14 +658,14 @@
         let color = '#06b6d4', label = 'W';
         if (p.type === 'MULTIBALL') { color = '#f59e0b'; label = 'M'; }
         if (p.type === 'LASER') { color = '#ec4899'; label = 'L'; }
-        ctx.fillStyle = color; ctx.shadowBlur = 10; ctx.shadowColor = color; ctx.fill();
-        ctx.fillStyle = '#ffffff'; ctx.font = '800 10px Outfit'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = color; ctx.shadowBlur = 8; ctx.shadowColor = color; ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.font = '800 9px Outfit'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(label, p.x, p.y); ctx.restore();
       }
 
-      ctx.save(); ctx.beginPath(); ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 6);
+      ctx.save(); ctx.beginPath(); ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 5);
       const paddleGlow = Date.now() < activeBuffs.laser ? '#ec4899' : '#06b6d4';
-      ctx.fillStyle = paddleGlow; ctx.shadowBlur = 12; ctx.shadowColor = paddleGlow; ctx.fill();
+      ctx.fillStyle = paddleGlow; ctx.shadowBlur = 10; ctx.shadowColor = paddleGlow; ctx.fill();
       ctx.beginPath(); ctx.roundRect(paddle.x + 2, paddle.y + 1, paddle.width - 4, paddle.height / 2 - 1, 2);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'; ctx.fill(); ctx.restore();
 
@@ -676,7 +677,7 @@
           ctx.fillStyle = `rgba(236, 72, 153, ${(i + 1) / ball.trail.length * 0.4})`; ctx.fill(); ctx.restore();
         }
         ctx.save(); ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 12; ctx.shadowColor = '#ec4899'; ctx.fill(); ctx.restore();
+        ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 10; ctx.shadowColor = '#ec4899'; ctx.fill(); ctx.restore();
       }
 
       particles.forEach(p => p.draw(ctx));
