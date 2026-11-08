@@ -2,9 +2,8 @@
 <html lang="id" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dapur Panik Arcade - The Chaos Arcade</title>
-    <meta name="description" content="Mainkan game Dapur Panik interaktif dengan sentuhan arcade seru langsung di browser!">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dapur Panik - Fullscreen Arcade</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -12,7 +11,7 @@
             theme: {
                 extend: {
                     colors: {
-                        darkbg: '#0f172a',
+                        darkbg: '#090d16',
                         neonpink: '#f43f5e',
                         neongreen: '#10b981',
                         neonpurple: '#8b5cf6'
@@ -21,87 +20,84 @@
             }
         }
     </script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #090d16;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, sans-serif;
+            touch-action: manipulation;
+        }
+    </style>
 </head>
-<body class="bg-darkbg text-slate-100 min-h-screen font-sans antialiased selection:bg-neonpink selection:text-white flex flex-col justify-between">
+<body class="flex flex-col justify-between h-screen w-screen select-none">
 
-    <!-- Header -->
-    <header class="border-b border-slate-800 bg-darkbg/80 backdrop-blur-md">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="index.html" class="text-slate-300 hover:text-neonpink text-sm font-semibold transition flex items-center gap-1">
-                ← Kembali ke Portal
-            </a>
-            <h1 class="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-neonpink to-neongreen">
-                DAPUR PANIK: ARCADE 🍳
-            </h1>
+    <!-- Top Bar Minimalis -->
+    <header class="flex justify-between items-center px-4 py-3 bg-slate-900/80 border-b border-slate-800 backdrop-blur-md z-30">
+        <a href="index.html" class="text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1">
+            ← Keluar
+        </a>
+        <div class="flex gap-4 text-xs font-black">
+            <span class="bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 text-neongreen">SKOR: <span id="scoreVal">0</span></span>
+            <span class="bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 text-neonpink">WAKTU: <span id="timeVal">30s</span></span>
         </div>
     </header>
 
-    <!-- Game Arena Canvas -->
-    <main class="max-w-xl w-full mx-auto px-4 py-6 flex-grow flex flex-col justify-center items-center">
-        <div class="bg-slate-900 border-2 border-neonpink/50 rounded-3xl p-4 md:p-6 shadow-2xl shadow-neonpink/10 w-full">
-            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                <div>
-                    <h3 class="text-lg font-black text-white">Solo Madness Action</h3>
-                    <p class="text-slate-400 text-xs mt-0.5">Klik atau sentuh bahan makanan segar (<span class="text-neongreen font-bold">Hijau</span>), hindari sampah (<span class="text-neonpink font-bold">Merah</span>)!</p>
-                </div>
-                <div class="flex gap-2 text-center">
-                    <div class="bg-slate-800 px-3 py-1 rounded-xl border border-slate-700">
-                        <span class="block text-[8px] text-slate-400 uppercase">Skor</span>
-                        <span id="scoreVal" class="text-base font-black text-neongreen">0</span>
-                    </div>
-                    <div class="bg-slate-800 px-3 py-1 rounded-xl border border-slate-700">
-                        <span class="block text-[8px] text-slate-400 uppercase">Waktu</span>
-                        <span id="timeVal" class="text-base font-black text-neonpink">30s</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Canvas Game Interaktif -->
-            <div class="relative bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-inner flex flex-col items-center">
-                
-                <!-- Overlay Start -->
-                <div id="startOverlay" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center z-20">
-                    <span class="text-5xl mb-3 animate-bounce">🔥</span>
-                    <h4 class="text-xl font-bold text-white mb-2">Siap Hadapi Dapur Rusuh?</h4>
-                    <p class="text-slate-400 text-xs max-w-xs mb-6">Waktu cuma 30 detik. Kumpulkan skor sebanyak-banyaknya!</p>
-                    <button onclick="startGame()" class="bg-gradient-to-r from-neonpink to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-black px-8 py-3 rounded-xl shadow-lg transition transform hover:scale-105 text-sm">
-                        Mulai Masak 🚀
-                    </button>
-                </div>
-
-                <!-- Overlay Game Over -->
-                <div id="gameOverOverlay" class="absolute inset-0 bg-slate-950/90 hidden flex flex-col items-center justify-center p-6 text-center z-20">
-                    <span class="text-5xl mb-2">💥</span>
-                    <h4 class="text-2xl font-black text-neonpink mb-1">Dapur Meledak!</h4>
-                    <p class="text-slate-300 text-xs mb-4">Skor Akhir Kamu: <span id="finalScore" class="font-bold text-neongreen text-base">0</span></p>
-                    <button onclick="startGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2.5 rounded-xl transition text-sm">
-                        Main Lagi 🔄
-                    </button>
-                </div>
-
-                <!-- HTML5 Canvas untuk Render Game -->
-                <canvas id="gameCanvas" width="360" height="380" class="w-full max-w-[360px] h-[380px] cursor-crosshair block"></canvas>
-            </div>
+    <!-- Canvas Fullscreen Area -->
+    <main class="relative flex-grow flex items-center justify-center overflow-hidden w-full h-full">
+        
+        <!-- Start Menu Overlay -->
+        <div id="startOverlay" class="absolute inset-0 bg-[#090d16]/95 flex flex-col items-center justify-center p-6 text-center z-40 backdrop-blur-sm">
+            <div class="text-6xl mb-4 animate-bounce">🍳</div>
+            <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neonpink via-purple-400 to-neongreen mb-2">
+                DAPUR PANIK
+            </h1>
+            <p class="text-slate-400 text-xs md:text-sm max-w-xs mb-8">
+                Tangkap bahan makanan segar, hindari sampah secepat mungkin! Dilengkapi efek suara & animasi arcade.
+            </p>
+            <button onclick="startGame()" class="bg-gradient-to-r from-neonpink to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-neonpink/20 transition transform active:scale-95 text-base uppercase tracking-wider">
+                Mulai Main 🚀
+            </button>
         </div>
+
+        <!-- Game Over Overlay -->
+        <div id="gameOverOverlay" class="absolute inset-0 bg-[#090d16]/95 hidden flex flex-col items-center justify-center p-6 text-center z-40 backdrop-blur-sm">
+            <div class="text-6xl mb-3">💥</div>
+            <h2 class="text-3xl font-black text-neonpink mb-1">WAKTU HABIS!</h2>
+            <p class="text-slate-300 text-sm mb-6">Skor Akhir Kamu: <span id="finalScore" class="font-black text-neongreen text-xl">0</span></p>
+            <button onclick="startGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8 py-3 rounded-xl transition shadow-lg active:scale-95">
+                Main Lagi 🔄
+            </button>
+        </div>
+
+        <!-- Canvas Mengisi Seluruh Layar (Fullscreen) -->
+        <canvas id="gameCanvas" class="absolute inset-0 w-full h-full block cursor-crosshair"></canvas>
     </main>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 The Chaos Arcade. Action Arcade Engine.</p>
-    </footer>
-
-    <!-- Script Game Engine Dapur Panik -->
+    <!-- Sound & Game Logic Engine -->
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+
+        // Auto Resize Canvas agar selalu Fullscreen pas di HP/Tablet/Laptop
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - 60; // Kurangi tinggi header
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
         let score = 0;
         let timeLeft = 30;
         let isPlaying = false;
         let gameTimer = null;
         let spawnerTimer = null;
-
         let items = [];
+        let particles = []; // Efek partikel ledakan saat diklik
 
         const scoreVal = document.getElementById('scoreVal');
         const timeVal = document.getElementById('timeVal');
@@ -109,10 +105,39 @@
         const gameOverOverlay = document.getElementById('gameOverOverlay');
         const finalScore = document.getElementById('finalScore');
 
+        // Web Audio API untuk Efek Suara Tanpa File Eksternal
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'good') {
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'bad') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            }
+        }
+
         function startGame() {
             score = 0;
             timeLeft = 30;
             items = [];
+            particles = [];
             scoreVal.textContent = score;
             timeVal.textContent = timeLeft + 's';
             startOverlay.classList.add('hidden');
@@ -123,57 +148,54 @@
             gameTimer = setInterval(() => {
                 timeLeft--;
                 timeVal.textContent = timeLeft + 's';
-                if (timeLeft <= 0) {
-                    endGame();
-                }
+                if (timeLeft <= 0) endGame();
             }, 1000);
 
             if (spawnerTimer) clearInterval(spawnerTimer);
             spawnerTimer = setInterval(() => {
                 if (!isPlaying) return;
-                spawnGameItem();
-            }, 550);
+                spawnItem();
+            }, 500);
 
             loop();
         }
 
-        function spawnGameItem() {
+        function spawnItem() {
             const isBad = Math.random() < 0.25;
-            const emojis = isBad ? ['🗑️', '💀', '🧦'] : ['🍔', '🍕', '🌭', '🥤'];
-            const chosenEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-
+            const emojis = isBad ? ['🗑️', '💀', '🧦'] : ['🍔', '🍕', '🌭', '🥤', '🍗'];
+            
             items.push({
-                x: Math.random() * (canvas.width - 40) + 20,
-                y: -30,
-                vy: 2 + Math.random() * 2.5,
-                radius: 20,
-                emoji: chosenEmoji,
+                x: Math.random() * (canvas.width - 80) + 40,
+                y: -50,
+                vy: 3 + Math.random() * 3,
+                size: 36,
+                emoji: emojis[Math.floor(Math.random() * emojis.length)],
                 isBad: isBad,
-                life: 60 // durasi hidup dalam frame sebelum hilang
+                angle: 0,
+                spin: (Math.random() - 0.5) * 0.05
             });
         }
 
-        // Tangkap klik/sentuh layar pada canvas
-        canvas.addEventListener('click', (e) => {
+        // Deteksi klik / sentuh layar di seluruh area canvas fullscreen
+        canvas.addEventListener('pointerdown', (e) => {
             if (!isPlaying) return;
             const rect = canvas.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
             const clickY = e.clientY - rect.top;
 
-            // Sesuaikan skala koordinat canvas asli
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            const realX = clickX * scaleX;
-            const realY = clickY * scaleY;
-
             for (let i = items.length - 1; i >= 0; i--) {
                 let item = items[i];
-                let dist = Math.hypot(item.x - realX, item.y - realY);
-                if (dist < item.radius + 15) {
+                let dist = Math.hypot(item.x - clickX, item.y - clickY);
+                
+                if (dist < item.size) {
                     if (item.isBad) {
                         score = Math.max(0, score - 3);
+                        playSound('bad');
+                        createParticles(item.x, item.y, '#f43f5e');
                     } else {
                         score += 5;
+                        playSound('good');
+                        createParticles(item.x, item.y, '#10b981');
                     }
                     scoreVal.textContent = score;
                     items.splice(i, 1);
@@ -182,36 +204,66 @@
             }
         });
 
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 8; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 20,
+                    color: color
+                });
+            }
+        }
+
         function loop() {
             if (!isPlaying) return;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Background dapur gelap
-            ctx.fillStyle = '#020617';
+            // Background efek gradasi halus
+            let bgGrad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 50, canvas.width/2, canvas.height/2, canvas.width);
+            bgGrad.addColorStop(0, '#0f172a');
+            bgGrad.addColorStop(1, '#090d16');
+            ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Update & Render Item Makanan/Sampah
+            // Update & Render Partikel Ledakan
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            // Update & Render Item Game
             for (let i = items.length - 1; i >= 0; i--) {
                 let item = items[i];
                 item.y += item.vy;
-                item.life--;
+                item.angle += item.spin;
 
-                // Gambar item di canvas
-                ctx.font = '28px sans-serif';
+                ctx.save();
+                ctx.translate(item.x, item.y);
+                ctx.rotate(item.angle);
+                ctx.font = `${item.size}px sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(item.emoji, item.x, item.y);
+                ctx.fillText(item.emoji, 0, 0);
+                ctx.restore();
 
-                // Hapus jika keluar layar atau habis masa hidupnya
-                if (item.y > canvas.height + 30 || item.life <= 0) {
+                // Hapus jika keluar layar bawah
+                if (item.y > canvas.height + 60) {
                     items.splice(i, 1);
                 }
             }
 
-            if (isPlaying) {
-                requestAnimationFrame(loop);
-            }
+            requestAnimationFrame(loop);
         }
 
         function endGame() {
