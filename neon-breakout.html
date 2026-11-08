@@ -20,11 +20,22 @@
     body {
       background: radial-gradient(circle at center, #0f1026 0%, #05050d 100%);
       color: #ffffff;
-      overflow: hidden;
+      overflow-y: auto;
+      /* Mencegah efek layar memantul / refresh saat ditarik di Safari */
+      overscroll-behavior-y: none;
+      margin: 0;
+      padding: 16px 12px;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 14px;
     }
 
     .glass-panel {
-      background: rgba(18, 22, 41, 0.8);
+      background: rgba(18, 22, 41, 0.85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -56,28 +67,30 @@
       text-shadow: 0 0 10px rgba(234, 179, 8, 0.8), 0 0 20px rgba(234, 179, 8, 0.4);
     }
 
-    .neon-text-pink {
-      text-shadow: 0 0 10px rgba(236, 72, 153, 0.8), 0 0 20px rgba(236, 72, 153, 0.4);
-    }
-
+    /* Memperbesar ukuran maksimal tampilan game agar pas di iPad/Tablet */
     canvas {
+      width: 100%;
+      max-width: 440px;
+      height: auto;
       display: block;
+      margin: 0 auto;
+      border-radius: 16px;
     }
   </style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-between items-center p-2 sm:p-4 relative">
+<body>
 
   <!-- HUD Header -->
-  <header class="w-full max-w-lg glass-panel rounded-2xl p-3 flex justify-between items-center z-10 shadow-lg">
-    <div class="flex items-center space-x-4">
+  <header class="w-full max-w-[440px] glass-panel rounded-2xl p-3.5 flex justify-between items-center z-10 shadow-lg shrink-0">
+    <div class="flex items-center space-x-3">
       <div>
         <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Score</p>
-        <p id="scoreEl" class="text-2xl font-black text-cyan-400 neon-text-cyan">0</p>
+        <p id="scoreEl" class="text-xl font-black text-cyan-400 neon-text-cyan">0</p>
       </div>
-      <div class="h-8 w-px bg-white/10"></div>
+      <div class="h-6 w-px bg-white/10"></div>
       <div>
         <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">High Score</p>
-        <p id="highScoreEl" class="text-xl font-black text-amber-400 neon-text-gold">0</p>
+        <p id="highScoreEl" class="text-lg font-black text-amber-400 neon-text-gold">0</p>
       </div>
     </div>
 
@@ -85,36 +98,36 @@
     <div id="powerupTimerBar" class="flex items-center space-x-2"></div>
 
     <!-- Health & Pause Controls -->
-    <div class="flex items-center space-x-3">
-      <div class="flex items-center space-x-1 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10" id="livesContainer">
-        <span class="text-rose-500 text-lg">❤️</span>
-        <span class="text-rose-500 text-lg">❤️</span>
-        <span class="text-rose-500 text-lg">❤️</span>
+    <div class="flex items-center space-x-2.5">
+      <div class="flex items-center space-x-1 bg-black/40 px-2.5 py-1.5 rounded-xl border border-white/10" id="livesContainer">
+        <span class="text-rose-500 text-sm">❤️</span>
+        <span class="text-rose-500 text-sm">❤️</span>
+        <span class="text-rose-500 text-sm">❤️</span>
       </div>
-      <button id="pauseBtn" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition">
+      <button id="pauseBtn" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition text-sm">
         ⏸️
       </button>
     </div>
   </header>
 
   <!-- Game Canvas Container -->
-  <main id="canvasContainer" class="relative w-full max-w-lg flex-1 my-2 sm:my-3 rounded-3xl overflow-hidden glass-panel border border-white/10 flex justify-center items-center">
+  <main id="canvasContainer" class="relative w-full max-w-[440px] rounded-3xl overflow-hidden flex justify-center items-center shrink-0 glass-panel border border-white/10 mb-4">
     <canvas id="gameCanvas"></canvas>
 
     <!-- Start Overlay Screen -->
-    <div id="startOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 bg-slate-950/85 backdrop-blur-md">
-      <h1 class="text-4xl sm:text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 tracking-tight">
+    <div id="startOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 bg-slate-950/90 backdrop-blur-md">
+      <h1 class="text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 tracking-tight">
         NEON BREAKOUT
       </h1>
-      <p class="text-slate-300 text-xs sm:text-sm max-w-xs mb-8 leading-relaxed">
+      <p class="text-slate-300 text-xs max-w-xs mb-5 leading-relaxed">
         Smash neon bricks, catch power-up capsules, and laser your way to high score glory!
       </p>
 
-      <button id="startBtn" class="px-8 py-4 rounded-2xl glass-btn font-extrabold text-lg text-white tracking-wider uppercase">
+      <button id="startBtn" class="px-7 py-3 rounded-2xl glass-btn font-extrabold text-sm text-white tracking-wider uppercase">
         Start Game
       </button>
 
-      <div class="mt-8 flex items-center space-x-3 text-xs text-slate-400">
+      <div class="mt-4 flex items-center space-x-3 text-xs text-slate-400">
         <span>🖱️ Drag Mouse</span>
         <span>•</span>
         <span>👆 Touch Swipe</span>
@@ -122,183 +135,139 @@
     </div>
 
     <!-- Pause Overlay Screen -->
-    <div id="pauseOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 hidden bg-slate-950/85 backdrop-blur-md">
-      <h2 class="text-4xl font-black mb-6 text-cyan-400 neon-text-cyan">GAME PAUSED</h2>
-      <button id="resumeBtn" class="px-8 py-3.5 rounded-2xl glass-btn font-extrabold text-base text-white uppercase tracking-wider">
+    <div id="pauseOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 hidden bg-slate-950/90 backdrop-blur-md">
+      <h2 class="text-2xl font-black mb-4 text-cyan-400 neon-text-cyan">GAME PAUSED</h2>
+      <button id="resumeBtn" class="px-8 py-3 rounded-2xl glass-btn font-extrabold text-sm text-white uppercase tracking-wider">
         Resume Game
       </button>
     </div>
 
     <!-- Game Over / Win Overlay Screen -->
-    <div id="gameOverOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 hidden bg-black/85 backdrop-blur-md">
-      <h2 id="gameOverTitle" class="text-4xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]">
+    <div id="gameOverOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 hidden bg-black/90 backdrop-blur-md">
+      <h2 id="gameOverTitle" class="text-2xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]">
         GAME OVER
       </h2>
-      <p id="newHighScoreTag" class="text-amber-400 text-xs font-bold tracking-widest uppercase mb-4 hidden neon-text-gold">
+      <p id="newHighScoreTag" class="text-amber-400 text-xs font-bold tracking-widest uppercase mb-3 hidden neon-text-gold">
         🏆 NEW HIGH SCORE! 🏆
       </p>
 
-      <div class="glass-panel rounded-2xl p-4 w-60 mb-6 space-y-2 border border-white/10">
-        <div class="flex justify-between items-center text-sm">
+      <div class="glass-panel rounded-2xl p-3 w-52 mb-5 space-y-2 border border-white/10 text-xs">
+        <div class="flex justify-between items-center">
           <span class="text-slate-400">Final Score:</span>
-          <span id="finalScoreEl" class="text-xl font-bold text-cyan-400">0</span>
+          <span id="finalScoreEl" class="font-bold text-cyan-400">0</span>
         </div>
-        <div class="flex justify-between items-center text-sm">
+        <div class="flex justify-between items-center">
           <span class="text-slate-400">Best Score:</span>
-          <span id="bestScoreEl" class="text-xl font-bold text-amber-400">0</span>
+          <span id="bestScoreEl" class="font-bold text-amber-400">0</span>
         </div>
       </div>
 
-      <button id="restartBtn" class="px-8 py-3.5 rounded-2xl glass-btn font-extrabold text-base text-white uppercase tracking-wider">
+      <button id="restartBtn" class="px-8 py-3 rounded-2xl glass-btn font-extrabold text-sm text-white uppercase tracking-wider">
         Play Again
       </button>
     </div>
   </main>
 
   <script>
-    // --- Web Audio API Synth Sound Engine ---
     class SoundEngine {
-      constructor() {
-        this.ctx = null;
-      }
-
+      constructor() { this.ctx = null; }
       init() {
         if (!this.ctx) {
           const AudioCtx = window.AudioContext || window.webkitAudioContext;
           this.ctx = new AudioCtx();
         }
-        if (this.ctx.state === 'suspended') {
-          this.ctx.resume();
-        }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
       }
-
       playBounce(isPaddle = false) {
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-
         osc.type = isPaddle ? 'sine' : 'triangle';
         const startFreq = isPaddle ? 420 : 300;
         osc.frequency.setValueAtTime(startFreq, now);
         osc.frequency.exponentialRampToValueAtTime(startFreq * 1.4, now + 0.08);
-
         gain.gain.setValueAtTime(0.25, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.08);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.08);
       }
-
       playHit(hpLeft) {
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-
         osc.type = 'square';
         const baseFreq = hpLeft === 0 ? 580 : 320 + (hpLeft * 100);
         osc.frequency.setValueAtTime(baseFreq, now);
         osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, now + 0.1);
-
         gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.1);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.1);
       }
-
       playPowerup() {
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
         [440, 554.37, 659.25, 880].forEach((freq, idx) => {
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
-
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, now + idx * 0.05);
-
           gain.gain.setValueAtTime(0.15, now + idx * 0.05);
           gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.05 + 0.12);
-
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start(now + idx * 0.05);
-          osc.stop(now + idx * 0.05 + 0.12);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.05); osc.stop(now + idx * 0.05 + 0.12);
         });
       }
-
       playLaser() {
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(900, now);
         osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
-
         gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.1);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.1);
       }
-
       playGameOver(isWin = false) {
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
         const freqs = isWin ? [523.25, 659.25, 783.99, 1046.5] : [300, 250, 200, 140];
-
         freqs.forEach((freq, idx) => {
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
-
           osc.type = isWin ? 'triangle' : 'sawtooth';
           osc.frequency.setValueAtTime(freq, now + idx * 0.12);
-
           gain.gain.setValueAtTime(0.25, now + idx * 0.12);
           gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.25);
-
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start(now + idx * 0.12);
-          osc.stop(now + idx * 0.12 + 0.25);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.12); osc.stop(now + idx * 0.12 + 0.25);
         });
       }
     }
 
     const sound = new SoundEngine();
 
-    // --- Particle Burst Engine ---
     class Particle {
       constructor(x, y, color) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        this.radius = Math.random() * 3 + 1.5;
+        this.x = x; this.y = y; this.color = color;
+        this.radius = Math.random() * 3.5 + 1.5;
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 6 + 2;
+        const speed = Math.random() * 4.5 + 2;
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
         this.alpha = 1;
         this.decay = Math.random() * 0.03 + 0.025;
       }
-
       update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.vx *= 0.96;
-        this.vy *= 0.96;
+        this.x += this.vx; this.y += this.vy;
+        this.vx *= 0.96; this.vy *= 0.96;
         this.alpha -= this.decay;
       }
-
       draw(ctx) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, this.alpha);
@@ -312,26 +281,16 @@
       }
     }
 
-    // --- Floating Text Popups ---
     class FloatingText {
       constructor(x, y, text, color) {
-        this.x = x;
-        this.y = y;
-        this.text = text;
-        this.color = color;
-        this.alpha = 1;
-        this.vy = -1.5;
+        this.x = x; this.y = y; this.text = text; this.color = color;
+        this.alpha = 1; this.vy = -1.5;
       }
-
-      update() {
-        this.y += this.vy;
-        this.alpha -= 0.025;
-      }
-
+      update() { this.y += this.vy; this.alpha -= 0.025; }
       draw(ctx) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, this.alpha);
-        ctx.font = '800 16px Outfit';
+        ctx.font = '800 14px Outfit';
         ctx.fillStyle = this.color;
         ctx.shadowBlur = 6;
         ctx.shadowColor = this.color;
@@ -340,7 +299,6 @@
       }
     }
 
-    // --- Game Variables & Elements ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const canvasContainer = document.getElementById('canvasContainer');
@@ -363,73 +321,55 @@
     const resumeBtn = document.getElementById('resumeBtn');
     const restartBtn = document.getElementById('restartBtn');
 
-    let gameState = 'START'; // START, PLAYING, PAUSED, GAMEOVER
+    let gameState = 'START';
     let score = 0;
     let highScore = parseInt(localStorage.getItem('neon_breakout_highscore')) || 0;
     let lives = 3;
 
-    // Canvas Shake FX
     let shakeDuration = 0;
     let shakeMagnitude = 0;
 
-    // Paddle Config
-    const basePaddleWidth = 100;
-    const paddleHeight = 14;
-    let paddle = {
-      x: 0,
-      targetX: 0,
-      y: 0,
-      width: basePaddleWidth,
-      height: paddleHeight,
-      color: '#06b6d4'
-    };
+    const basePaddleWidth = 92;
+    const paddleHeight = 13;
+    let paddle = { x: 0, targetX: 0, y: 0, width: basePaddleWidth, height: paddleHeight, color: '#06b6d4' };
 
-    // Balls Array (for multi-ball powerup support)
     let balls = [];
-
-    // Bricks Grid
     let bricks = [];
     const BRICK_ROWS = 5;
     const BRICK_COLS = 7;
-    const BRICK_HEIGHT = 22;
-    const BRICK_PADDING = 8;
-    const BRICK_TOP_OFFSET = 60;
+    const BRICK_HEIGHT = 20;
+    const BRICK_PADDING = 5;
+    const BRICK_TOP_OFFSET = 28;
 
-    // Color Tiers for HP (3 = Red, 2 = Purple, 1 = Cyan)
     const BRICK_TIERS = {
       3: { fill: '#ef4444', glow: '#dc2626', score: 30 },
       2: { fill: '#a855f7', glow: '#9333ea', score: 20 },
       1: { fill: '#06b6d4', glow: '#0891b2', score: 10 }
     };
 
-    // Power-ups & Lasers
     let powerups = [];
     let lasers = [];
     let particles = [];
     let floatingTexts = [];
 
-    // Active Buffs Timers
-    let activeBuffs = {
-      widePaddle: 0,
-      laser: 0
-    };
+    let activeBuffs = { widePaddle: 0, laser: 0 };
     let lastLaserShot = 0;
 
-    // Resize Handler
-    function resizeCanvas() {
-      const rect = canvasContainer.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-      paddle.y = canvas.height - 35;
+    // Memperbesar resolusi kanvas agar tampil lebih besar dan proporsional di iPad (Lebar 440, Tinggi 560)
+    function resizeGame() {
+        canvas.width = 440;
+        canvas.height = 560;
+        if (typeof paddle !== "undefined") {
+            paddle.y = canvas.height - 45;
+        }
     }
 
-    // Initialize/Reset Game
+    resizeGame();
+
     function initGame() {
-      score = 0;
-      lives = 3;
-      shakeDuration = 0;
-      activeBuffs.widePaddle = 0;
-      activeBuffs.laser = 0;
+      resizeGame();
+      score = 0; lives = 3; shakeDuration = 0;
+      activeBuffs.widePaddle = 0; activeBuffs.laser = 0;
 
       scoreEl.textContent = score;
       highScoreEl.textContent = highScore;
@@ -442,19 +382,16 @@
       resetBalls();
       createBrickGrid();
 
-      powerups = [];
-      lasers = [];
-      particles = [];
-      floatingTexts = [];
+      powerups = []; lasers = []; particles = []; floatingTexts = [];
     }
 
     function resetBalls() {
       balls = [{
         x: canvas.width / 2,
-        y: paddle.y - 15,
-        vx: (Math.random() - 0.5) * 6,
-        vy: -7,
-        radius: 7,
+        y: paddle.y - 14,
+        vx: (Math.random() - 0.5) * 5.5,
+        vy: -5.5,
+        radius: 6.5,
         trail: []
       }];
     }
@@ -466,7 +403,6 @@
 
       for (let r = 0; r < BRICK_ROWS; r++) {
         for (let c = 0; c < BRICK_COLS; c++) {
-          // Assign HP based on row level
           let hp = 1;
           if (r === 0 || r === 1) hp = 3;
           else if (r === 2 || r === 3) hp = 2;
@@ -474,15 +410,7 @@
           const bx = BRICK_PADDING + c * (brickWidth + BRICK_PADDING);
           const by = BRICK_TOP_OFFSET + r * (BRICK_HEIGHT + BRICK_PADDING);
 
-          bricks.push({
-            x: bx,
-            y: by,
-            width: brickWidth,
-            height: BRICK_HEIGHT,
-            hp: hp,
-            maxHp: hp,
-            alive: true
-          });
+          bricks.push({ x: bx, y: by, width: brickWidth, height: BRICK_HEIGHT, hp, maxHp: hp, alive: true });
         }
       }
     }
@@ -490,33 +418,19 @@
     function updateLivesUI() {
       let heartsHtml = '';
       for (let i = 0; i < 3; i++) {
-        if (i < lives) {
-          heartsHtml += `<span class="text-rose-500 text-lg">❤️</span>`;
-        } else {
-          heartsHtml += `<span class="text-slate-600 text-lg opacity-40">🖤</span>`;
-        }
+        heartsHtml += i < lives ? `<span class="text-rose-500 text-sm">❤️</span>` : `<span class="text-slate-600 text-sm opacity-40">🖤</span>`;
       }
       livesContainer.innerHTML = heartsHtml;
     }
 
-    function triggerScreenShake(magnitude = 6, duration = 12) {
-      shakeMagnitude = magnitude;
-      shakeDuration = duration;
+    function triggerScreenShake(magnitude = 4, duration = 8) {
+      shakeMagnitude = magnitude; shakeDuration = duration;
     }
 
     function spawnPowerup(x, y) {
-      if (Math.random() > 0.20) return; // 20% drop probability
-
+      if (Math.random() > 0.20) return;
       const types = ['WIDE', 'MULTIBALL', 'LASER'];
-      const chosenType = types[Math.floor(Math.random() * types.length)];
-      
-      powerups.push({
-        x: x,
-        y: y,
-        vy: 2.5,
-        type: chosenType,
-        radius: 12
-      });
+      powerups.push({ x, y, vy: 2.2, type: types[Math.floor(Math.random() * types.length)], radius: 10 });
     }
 
     function applyPowerup(type) {
@@ -524,23 +438,19 @@
       if (type === 'WIDE') {
         activeBuffs.widePaddle = Date.now() + 10000;
         paddle.width = basePaddleWidth * 1.5;
-        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 20, 'WIDE PADDLE!', '#06b6d4'));
+        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 12, 'WIDE!', '#06b6d4'));
       } else if (type === 'MULTIBALL') {
-        // Spawn 2 extra balls at paddle
         for (let i = 0; i < 2; i++) {
           balls.push({
-            x: paddle.x + paddle.width / 2,
-            y: paddle.y - 15,
-            vx: (Math.random() - 0.5) * 8,
-            vy: -6 - Math.random() * 2,
-            radius: 7,
-            trail: []
+            x: paddle.x + paddle.width / 2, y: paddle.y - 14,
+            vx: (Math.random() - 0.5) * 5.5, vy: -5 - Math.random() * 1.5,
+            radius: 6.5, trail: []
           });
         }
-        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 20, 'MULTI-BALL!', '#f59e0b'));
+        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 12, 'MULTI!', '#f59e0b'));
       } else if (type === 'LASER') {
         activeBuffs.laser = Date.now() + 10000;
-        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 20, 'LASER CANNON!', '#ec4899'));
+        floatingTexts.push(new FloatingText(paddle.x + paddle.width / 2, paddle.y - 12, 'LASER!', '#ec4899'));
       }
     }
 
@@ -548,185 +458,110 @@
       if (Date.now() < activeBuffs.laser && Date.now() - lastLaserShot > 250) {
         lastLaserShot = Date.now();
         sound.playLaser();
-        lasers.push({ x: paddle.x + 10, y: paddle.y, vy: -10 });
-        lasers.push({ x: paddle.x + paddle.width - 10, y: paddle.y, vy: -10 });
+        lasers.push({ x: paddle.x + 10, y: paddle.y, vy: -9 });
+        lasers.push({ x: paddle.x + paddle.width - 10, y: paddle.y, vy: -9 });
       }
     }
 
-    // --- Inputs Handling ---
     function updatePaddlePosition(clientX) {
       const rect = canvas.getBoundingClientRect();
-      const relativeX = clientX - rect.left;
-      paddle.targetX = relativeX - paddle.width / 2;
+      const scaleX = canvas.width / rect.width;
+      paddle.targetX = (clientX - rect.left) * scaleX - paddle.width / 2;
     }
 
-    canvasContainer.addEventListener('mousemove', (e) => updatePaddlePosition(e.clientX));
-    canvasContainer.addEventListener('touchmove', (e) => {
+    canvas.addEventListener('mousemove', (e) => updatePaddlePosition(e.clientX));
+    canvas.addEventListener('touchmove', (e) => {
       if (e.touches.length > 0) updatePaddlePosition(e.touches[0].clientX);
     });
-    canvasContainer.addEventListener('pointerdown', () => {
-      if (gameState === 'PLAYING') fireLasers();
-    });
+    canvas.addEventListener('pointerdown', () => { if (gameState === 'PLAYING') fireLasers(); });
 
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && gameState === 'PLAYING') {
-        fireLasers();
-      }
-    });
+    window.addEventListener('keydown', (e) => { if (e.code === 'Space' && gameState === 'PLAYING') fireLasers(); });
 
-    // --- UI Controls ---
     startBtn.addEventListener('click', () => {
-      sound.init();
-      gameState = 'PLAYING';
-      startOverlay.classList.add('hidden');
-      initGame();
-      requestAnimationFrame(gameLoop);
+      sound.init(); gameState = 'PLAYING'; startOverlay.classList.add('hidden');
+      initGame(); requestAnimationFrame(gameLoop);
     });
 
     pauseBtn.addEventListener('click', () => {
-      if (gameState === 'PLAYING') {
-        gameState = 'PAUSED';
-        pauseOverlay.classList.remove('hidden');
-      }
+      if (gameState === 'PLAYING') { gameState = 'PAUSED'; pauseOverlay.classList.remove('hidden'); }
     });
 
     resumeBtn.addEventListener('click', () => {
-      if (gameState === 'PAUSED') {
-        gameState = 'PLAYING';
-        pauseOverlay.classList.add('hidden');
-        requestAnimationFrame(gameLoop);
-      }
+      if (gameState === 'PAUSED') { gameState = 'PLAYING'; pauseOverlay.classList.add('hidden'); requestAnimationFrame(gameLoop); }
     });
 
     restartBtn.addEventListener('click', () => {
-      sound.init();
-      gameState = 'PLAYING';
-      gameOverOverlay.classList.add('hidden');
-      initGame();
-      requestAnimationFrame(gameLoop);
+      sound.init(); gameState = 'PLAYING'; gameOverOverlay.classList.add('hidden');
+      initGame(); requestAnimationFrame(gameLoop);
     });
 
-    // --- Main Game Loop ---
     function gameLoop() {
       if (gameState !== 'PLAYING') return;
-
-      update();
-      render();
-
+      update(); render();
       requestAnimationFrame(gameLoop);
     }
 
-    // --- Physics & Logic Update ---
     function update() {
-      // 1. Smooth Paddle Motion (Lerp)
       paddle.x += (paddle.targetX - paddle.x) * 0.25;
-      // Clamp paddle inside screen boundaries
       if (paddle.x < 0) paddle.x = 0;
       if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
 
-      // 2. Active Buff Expire Timer Handling
       const now = Date.now();
       if (activeBuffs.widePaddle > 0 && now > activeBuffs.widePaddle) {
-        activeBuffs.widePaddle = 0;
-        paddle.width = basePaddleWidth;
+        activeBuffs.widePaddle = 0; paddle.width = basePaddleWidth;
       }
-      if (activeBuffs.laser > 0 && now > activeBuffs.laser) {
-        activeBuffs.laser = 0;
-      }
+      if (activeBuffs.laser > 0 && now > activeBuffs.laser) activeBuffs.laser = 0;
       updateActiveBuffsHUD(now);
 
-      // 3. Lasers Logic
       for (let i = lasers.length - 1; i >= 0; i--) {
-        const l = lasers[i];
-        l.y += l.vy;
-
-        // Check Laser Collision with Bricks
+        const l = lasers[i]; l.y += l.vy;
         for (let b of bricks) {
           if (b.alive && l.x >= b.x && l.x <= b.x + b.width && l.y >= b.y && l.y <= b.y + b.height) {
-            b.hp--;
-            sound.playHit(b.hp);
+            b.hp--; sound.playHit(b.hp);
             createBrickParticles(l.x, l.y, BRICK_TIERS[b.maxHp].fill);
-
             if (b.hp <= 0) {
-              b.alive = false;
-              score += BRICK_TIERS[b.maxHp].score;
-              scoreEl.textContent = score;
+              b.alive = false; score += BRICK_TIERS[b.maxHp].score; scoreEl.textContent = score;
               spawnPowerup(b.x + b.width / 2, b.y + b.height / 2);
             }
-            lasers.splice(i, 1);
-            break;
+            lasers.splice(i, 1); break;
           }
         }
         if (l.y < 0) lasers.splice(i, 1);
       }
 
-      // 4. Balls Physics & Collisions
       for (let i = balls.length - 1; i >= 0; i--) {
         const ball = balls[i];
-
-        // Ball Trail Recording
         ball.trail.push({ x: ball.x, y: ball.y });
-        if (ball.trail.length > 8) ball.trail.shift();
+        if (ball.trail.length > 7) ball.trail.shift();
 
-        ball.x += ball.vx;
-        ball.y += ball.vy;
+        ball.x += ball.vx; ball.y += ball.vy;
 
-        // Wall Collisions
-        if (ball.x - ball.radius <= 0) {
-          ball.x = ball.radius;
-          ball.vx *= -1;
-          sound.playBounce(false);
-        } else if (ball.x + ball.radius >= canvas.width) {
-          ball.x = canvas.width - ball.radius;
-          ball.vx *= -1;
-          sound.playBounce(false);
-        }
+        if (ball.x - ball.radius <= 0) { ball.x = ball.radius; ball.vx *= -1; sound.playBounce(false); }
+        else if (ball.x + ball.radius >= canvas.width) { ball.x = canvas.width - ball.radius; ball.vx *= -1; sound.playBounce(false); }
+        if (ball.y - ball.radius <= 0) { ball.y = ball.radius; ball.vy *= -1; sound.playBounce(false); }
 
-        if (ball.y - ball.radius <= 0) {
-          ball.y = ball.radius;
-          ball.vy *= -1;
-          sound.playBounce(false);
-        }
-
-        // Paddle Collision
         if (ball.y + ball.radius >= paddle.y && ball.y - ball.radius <= paddle.y + paddle.height &&
             ball.x >= paddle.x && ball.x <= paddle.x + paddle.width && ball.vy > 0) {
-          
-          ball.vy *= -1.02; // Slightly increase speed on paddle bounce
-          // Dynamic horizontal bounce angle based on hit location relative to center
+          ball.vy *= -1.02;
           const hitPoint = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
-          ball.vx = hitPoint * 7.5;
-
+          ball.vx = hitPoint * 7;
           sound.playBounce(true);
           createBrickParticles(ball.x, paddle.y, '#06b6d4');
         }
 
-        // Brick Collisions
         for (let b of bricks) {
           if (!b.alive) continue;
-
           if (ball.x + ball.radius >= b.x && ball.x - ball.radius <= b.x + b.width &&
               ball.y + ball.radius >= b.y && ball.y - ball.radius <= b.y + b.height) {
-
-            // Determine collision side
             const prevX = ball.x - ball.vx;
-            const prevY = ball.y - ball.vy;
+            if (prevX + ball.radius <= b.x || prevX - ball.radius >= b.x + b.width) ball.vx *= -1;
+            else ball.vy *= -1;
 
-            if (prevX + ball.radius <= b.x || prevX - ball.radius >= b.x + b.width) {
-              ball.vx *= -1;
-            } else {
-              ball.vy *= -1;
-            }
-
-            b.hp--;
-            sound.playHit(b.hp);
-            triggerScreenShake(4, 8);
+            b.hp--; sound.playHit(b.hp); triggerScreenShake(4, 8);
             createBrickParticles(ball.x, ball.y, BRICK_TIERS[b.maxHp].fill);
 
             if (b.hp <= 0) {
-              b.alive = false;
-              score += BRICK_TIERS[b.maxHp].score;
-              scoreEl.textContent = score;
+              b.alive = false; score += BRICK_TIERS[b.maxHp].score; scoreEl.textContent = score;
               floatingTexts.push(new FloatingText(b.x + b.width / 2, b.y, `+${BRICK_TIERS[b.maxHp].score}`, BRICK_TIERS[b.maxHp].fill));
               spawnPowerup(b.x + b.width / 2, b.y + b.height / 2);
             }
@@ -734,227 +569,124 @@
           }
         }
 
-        // Bottom Screen Loss
-        if (ball.y - ball.radius > canvas.height) {
-          balls.splice(i, 1);
-        }
+        if (ball.y - ball.radius > canvas.height) balls.splice(i, 1);
       }
 
-      // Handle All Balls Lost
       if (balls.length === 0) {
-        lives--;
-        triggerScreenShake(10, 15);
-        updateLivesUI();
-
-        if (lives <= 0) {
-          endGame(false);
-        } else {
-          resetBalls();
-        }
+        lives--; triggerScreenShake(8, 12); updateLivesUI();
+        if (lives <= 0) endGame(false);
+        else resetBalls();
       }
 
-      // Check Win Condition (All Bricks Destroyed)
-      if (bricks.every(b => !b.alive)) {
-        endGame(true);
-      }
+      if (bricks.every(b => !b.alive)) endGame(true);
 
-      // 5. Powerups Fall & Catch
       for (let i = powerups.length - 1; i >= 0; i--) {
-        const p = powerups[i];
-        p.y += p.vy;
-
-        // Paddle Catch Check
+        const p = powerups[i]; p.y += p.vy;
         if (p.y + p.radius >= paddle.y && p.x >= paddle.x && p.x <= paddle.x + paddle.width) {
-          applyPowerup(p.type);
-          powerups.splice(i, 1);
-          continue;
+          applyPowerup(p.type); powerups.splice(i, 1); continue;
         }
-
         if (p.y > canvas.height + 20) powerups.splice(i, 1);
       }
 
-      // 6. Particle & Floating Text Updates
       for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update();
-        if (particles[i].alpha <= 0) particles.splice(i, 1);
+        particles[i].update(); if (particles[i].alpha <= 0) particles.splice(i, 1);
       }
-
       for (let i = floatingTexts.length - 1; i >= 0; i--) {
-        floatingTexts[i].update();
-        if (floatingTexts[i].alpha <= 0) floatingTexts.splice(i, 1);
+        floatingTexts[i].update(); if (floatingTexts[i].alpha <= 0) floatingTexts.splice(i, 1);
       }
     }
 
     function createBrickParticles(x, y, color) {
-      for (let i = 0; i < 12; i++) {
-        particles.push(new Particle(x, y, color));
-      }
+      for (let i = 0; i < 10; i++) particles.push(new Particle(x, y, color));
     }
 
     function updateActiveBuffsHUD(now) {
       let hudHtml = '';
       if (activeBuffs.widePaddle > now) {
         const sec = Math.ceil((activeBuffs.widePaddle - now) / 1000);
-        hudHtml += `<span class="bg-cyan-500/20 border border-cyan-400 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-lg">WIDE ${sec}s</span>`;
+        hudHtml += `<span class="bg-cyan-500/20 border border-cyan-400 text-cyan-300 text-[10px] font-bold px-2 py-0.5 rounded-lg">W:${sec}s</span>`;
       }
       if (activeBuffs.laser > now) {
         const sec = Math.ceil((activeBuffs.laser - now) / 1000);
-        hudHtml += `<span class="bg-pink-500/20 border border-pink-400 text-pink-300 text-[10px] font-bold px-2 py-0.5 rounded-lg">LASER ${sec}s</span>`;
+        hudHtml += `<span class="bg-pink-500/20 border border-pink-400 text-pink-300 text-[10px] font-bold px-2 py-0.5 rounded-lg">L:${sec}s</span>`;
       }
       powerupTimerBar.innerHTML = hudHtml;
     }
 
     function endGame(isWin) {
-      gameState = 'GAMEOVER';
-      sound.playGameOver(isWin);
-
+      gameState = 'GAMEOVER'; sound.playGameOver(isWin);
       let isNewHigh = false;
       if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('neon_breakout_highscore', highScore);
-        highScoreEl.textContent = highScore;
-        isNewHigh = true;
+        highScore = score; localStorage.setItem('neon_breakout_highscore', highScore);
+        highScoreEl.textContent = highScore; isNewHigh = true;
       }
-
       gameOverTitle.textContent = isWin ? 'VICTORY!' : 'GAME OVER';
       gameOverTitle.className = isWin 
-        ? 'text-4xl font-black mb-1 text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.6)]'
-        : 'text-4xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]';
+        ? 'text-2xl font-black mb-1 text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.6)]'
+        : 'text-2xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]';
 
-      finalScoreEl.textContent = score;
-      bestScoreEl.textContent = highScore;
-
-      if (isNewHigh) newHighScoreTag.classList.remove('hidden');
-      else newHighScoreTag.classList.add('hidden');
-
+      finalScoreEl.textContent = score; bestScoreEl.textContent = highScore;
+      if (isNewHigh) newHighScoreTag.classList.remove('hidden'); else newHighScoreTag.classList.add('hidden');
       gameOverOverlay.classList.remove('hidden');
     }
 
-    // --- Rendering Pipeline ---
     function render() {
       ctx.save();
-
-      // Screen Shake Canvas Translation
       if (shakeDuration > 0) {
         shakeDuration--;
-        const dx = (Math.random() - 0.5) * shakeMagnitude;
-        const dy = (Math.random() - 0.5) * shakeMagnitude;
-        ctx.translate(dx, dy);
+        ctx.translate((Math.random() - 0.5) * shakeMagnitude, (Math.random() - 0.5) * shakeMagnitude);
       }
-
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 1. Render Bricks
       for (let b of bricks) {
         if (!b.alive) continue;
         const tier = BRICK_TIERS[b.hp];
-
-        ctx.save();
+        ctx.save(); ctx.beginPath();
+        ctx.roundRect(b.x, b.y, b.width, b.height, 5);
+        ctx.fillStyle = tier.fill; ctx.shadowBlur = 8; ctx.shadowColor = tier.glow; ctx.fill();
         ctx.beginPath();
-        ctx.roundRect(b.x, b.y, b.width, b.height, 6);
-        ctx.fillStyle = tier.fill;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = tier.glow;
-        ctx.fill();
-
-        // Inner Specular Glass Highlight
-        ctx.beginPath();
-        ctx.roundRect(b.x + 3, b.y + 3, b.width - 6, b.height / 2 - 2, 3);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        ctx.fill();
-        ctx.restore();
+        ctx.roundRect(b.x + 2, b.y + 2, b.width - 4, b.height / 2 - 2, 2.5);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)'; ctx.fill(); ctx.restore();
       }
 
-      // 2. Render Lasers
       for (let l of lasers) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(l.x, l.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = '#ec4899';
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = '#ec4899';
-        ctx.fill();
-        ctx.restore();
+        ctx.save(); ctx.beginPath(); ctx.arc(l.x, l.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#ec4899'; ctx.shadowBlur = 10; ctx.shadowColor = '#ec4899'; ctx.fill(); ctx.restore();
       }
 
-      // 3. Render Power-Up Falling Capsules
       for (let p of powerups) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        
-        let color = '#06b6d4';
-        let label = 'W';
+        ctx.save(); ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        let color = '#06b6d4', label = 'W';
         if (p.type === 'MULTIBALL') { color = '#f59e0b'; label = 'M'; }
         if (p.type === 'LASER') { color = '#ec4899'; label = 'L'; }
-
-        ctx.fillStyle = color;
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = color;
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '800 11px Outfit';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(label, p.x, p.y);
-        ctx.restore();
+        ctx.fillStyle = color; ctx.shadowBlur = 10; ctx.shadowColor = color; ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.font = '800 11px Outfit'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, p.x, p.y); ctx.restore();
       }
 
-      // 4. Render Paddle
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 8);
-      
+      ctx.save(); ctx.beginPath(); ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 7);
       const paddleGlow = Date.now() < activeBuffs.laser ? '#ec4899' : '#06b6d4';
-      ctx.fillStyle = paddleGlow;
-      ctx.shadowBlur = 16;
-      ctx.shadowColor = paddleGlow;
-      ctx.fill();
+      ctx.fillStyle = paddleGlow; ctx.shadowBlur = 14; ctx.shadowColor = paddleGlow; ctx.fill();
+      ctx.beginPath(); ctx.roundRect(paddle.x + 2, paddle.y + 1, paddle.width - 4, paddle.height / 2 - 1, 3);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'; ctx.fill(); ctx.restore();
 
-      // Specular Highlight on Paddle
-      ctx.beginPath();
-      ctx.roundRect(paddle.x + 4, paddle.y + 2, paddle.width - 8, paddle.height / 2 - 1, 4);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-      ctx.fill();
-      ctx.restore();
-
-      // 5. Render Balls & Motion Trails
       for (let ball of balls) {
-        // Trail
         for (let i = 0; i < ball.trail.length; i++) {
           const pt = ball.trail[i];
-          const alpha = (i + 1) / ball.trail.length * 0.4;
-          ctx.save();
-          ctx.beginPath();
+          ctx.save(); ctx.beginPath();
           ctx.arc(pt.x, pt.y, ball.radius * (i / ball.trail.length), 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(236, 72, 153, ${alpha})`;
-          ctx.fill();
-          ctx.restore();
+          ctx.fillStyle = `rgba(236, 72, 153, ${(i + 1) / ball.trail.length * 0.4})`; ctx.fill(); ctx.restore();
         }
-
-        // Ball Body
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 14;
-        ctx.shadowColor = '#ec4899';
-        ctx.fill();
-        ctx.restore();
+        ctx.save(); ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 12; ctx.shadowColor = '#ec4899'; ctx.fill(); ctx.restore();
       }
 
-      // 6. Particles & Text Popups
       particles.forEach(p => p.draw(ctx));
       floatingTexts.forEach(t => t.draw(ctx));
-
       ctx.restore();
     }
 
-    // Init Page setup
     highScoreEl.textContent = highScore;
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
   </script>
 </body>
 </html>
