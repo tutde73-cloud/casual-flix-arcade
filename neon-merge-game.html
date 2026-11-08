@@ -65,14 +65,12 @@
       text-shadow: 0 0 10px rgba(234, 179, 8, 0.8), 0 0 20px rgba(234, 179, 8, 0.4);
     }
 
-    /* Strict CSS rules for canvas sizing and overflow prevention */
+    /* Kunci ukuran canvas agar tidak meluber keluar dari batas pandang Safari/Mobile */
     canvas {
-      max-height: 80vh !important;
+      max-height: 75vh !important;
       max-width: 95vw !important;
       display: block;
       margin: 0 auto;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(142, 224, 189, 0.2);
     }
   </style>
 </head>
@@ -353,17 +351,21 @@
     let activeBuffs = { widePaddle: 0, laser: 0 };
     let lastLaserShot = 0;
 
-    function resizeCanvas() {
-      // Strictly requested canvas initialization rules
-      canvas.width = 400;
-      canvas.height = Math.min(window.innerHeight * 0.8, 600);
-      
-      // Strictly requested paddle Y formula rule
-      paddle.y = canvas.height - 50;
+    // Fungsi resizeGame() yang mendeteksi window.innerHeight secara real-time dan menyelaraskan posisi paddle
+    function resizeGame() {
+        canvas.width = 400;
+        canvas.height = Math.min(window.innerHeight * 0.75, 600);
+        if (typeof paddle !== "undefined") {
+            paddle.y = canvas.height - 40; // Memaksa posisi paddle selalu naik 40px dari dasar area canvas yang terlihat
+        }
     }
 
+    // Panggil resizeGame() di awal serta pasang event listener resize
+    resizeGame();
+    window.addEventListener("resize", resizeGame);
+
     function initGame() {
-      resizeCanvas();
+      resizeGame();
       score = 0; lives = 3; shakeDuration = 0;
       activeBuffs.widePaddle = 0; activeBuffs.laser = 0;
 
@@ -683,8 +685,6 @@
     }
 
     highScoreEl.textContent = highScore;
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
   </script>
 </body>
 </html>
