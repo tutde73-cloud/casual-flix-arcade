@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Cyberpunk Ping Pong</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            overflow-x: hidden;
+            touch-action: none;
+        }
+        .neon-glow-cyan {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 20px rgba(6, 182, 212, 0.5), 0 0 30px rgba(6, 182, 212, 0.3);
+        }
+        .neon-glow-pink {
+            text-shadow: 0 0 10px rgba(244, 63, 94, 0.8), 0 0 20px rgba(244, 63, 94, 0.5), 0 0 30px rgba(244, 63, 94, 0.3);
+        }
+        .neon-box-cyan {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.6), inset 0 0 15px rgba(6, 182, 212, 0.3);
+        }
+        .neon-box-pink {
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.6), inset 0 0 15px rgba(244, 63, 94, 0.3);
+        }
+        /* Custom scrollbar and selection guards */
+        * {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen bg-gray-950 p-2 sm:p-4">
+
+    <!-- Header / Scoreboard -->
+    <header class="w-full max-w-[500px] flex justify-between items-center mb-3 px-4 py-2 bg-gray-900/80 backdrop-blur border border-cyan-500/30 rounded-xl neon-box-cyan">
+        <div class="text-center">
+            <span class="block text-xs uppercase tracking-widest text-cyan-400 font-semibold">PLAYER</span>
+            <span id="playerScore" class="text-3xl sm:text-4xl font-black text-cyan-300 neon-glow-cyan">0</span>
+        </div>
+        <div class="text-center flex flex-col items-center">
+            <span class="text-xs uppercase tracking-wider text-gray-400">TARGET: 7</span>
+            <button id="pauseBtn" class="mt-1 px-3 py-1 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/50 rounded-lg text-xs font-bold transition-all shadow-lg active:scale-95 cursor-pointer">PAUSE</button>
+        </div>
+        <div class="text-center">
+            <span class="block text-xs uppercase tracking-widest text-rose-400 font-semibold">CPU</span>
+            <span id="cpuScore" class="text-3xl sm:text-4xl font-black text-rose-300 neon-glow-pink">0</span>
+        </div>
+    </header>
+
+    <!-- Game Container & Canvas -->
+    <main class="relative w-full max-w-[500px] flex flex-col items-center justify-center">
+        <!-- Canvas styled with cyberpunk borders -->
+        <canvas id="pongCanvas" class="block w-full rounded-2xl bg-black border-2 border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.2)] cursor-none"></canvas>
+
+        <!-- Start Overlay Screen -->
+        <div id="startOverlay" class="absolute inset-0 bg-gray-950/90 backdrop-blur-md flex flex-col items-center justify-center rounded-2xl z-20 transition-opacity duration-300">
+            <h1 class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-rose-500 neon-glow-cyan mb-2 tracking-wider text-center">NEON PING PONG</h1>
+            <p class="text-xs sm:text-sm text-cyan-200/70 mb-6 text-center px-6">Cyberpunk Retro Arcade Edition</p>
+            <button id="startBtn" class="px-8 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-extrabold rounded-xl text-lg shadow-[0_0_20px_rgba(6,182,212,0.6)] transition-all transform hover:scale-105 active:scale-95 cursor-pointer border border-cyan-300/40">START GAME</button>
+        </div>
+
+        <!-- Pause Overlay Screen -->
+        <div id="pauseOverlay" class="absolute inset-0 bg-gray-950/80 backdrop-blur-md flex flex-col items-center justify-center rounded-2xl z-20 hidden">
+            <h2 class="text-3xl font-black text-cyan-400 neon-glow-cyan mb-6 tracking-widest">PAUSED</h2>
+            <button id="resumeBtn" class="px-8 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-md shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105 active:scale-95 cursor-pointer border border-cyan-300/40">RESUME</button>
+        </div>
+
+        <!-- Game Over / Victory Defeat Modal Overlay -->
+        <div id="gameOverOverlay" class="absolute inset-0 bg-gray-950/95 backdrop-blur-lg flex flex-col items-center justify-center rounded-2xl z-30 hidden">
+            <h2 id="gameOverTitle" class="text-4xl sm:text-5xl font-black mb-3 tracking-widest text-center">VICTORY</h2>
+            <p id="gameOverSubtitle" class="text-sm text-gray-300 mb-8 text-center px-4">You have defeated the cyberpunk AI master!</p>
+            <button id="playAgainBtn" class="px-8 py-3 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-extrabold rounded-xl text-lg shadow-[0_0_25px_rgba(244,63,94,0.7)] transition-all transform hover:scale-105 active:scale-95 cursor-pointer border border-rose-300/40">PLAY AGAIN</button>
+        </div>
+    </main>
+
+    <!-- Footer Help instruction -->
+    <footer class="mt-3 text-center text-xs text-cyan-500/60 tracking-wider">
+        Move mouse or touch screen vertically to control left paddle
+    </footer>
+
+    <!-- Game Engine Script -->
+    <script>
+        // Audio Context initialization via Web Audio API for zero-dependency sound effects
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Synthesize cyberpunk retro sound effects
+        function playSound(type) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'paddle') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+                    gainNode.gain.setValueAtTime(0.15, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'wall') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.exponentialRampToValueAtTime(110, now + 0.06);
+                    gainNode.gain.setValueAtTime(0.1, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } else if (type === 'score') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.3);
+                    gainNode.gain.setValueAtTime(0.2, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'win') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.setValueAtTime(450, now + 0.1);
+                    osc.frequency.setValueAtTime(600, now + 0.2);
+                    osc.frequency.setValueAtTime(900, now + 0.3);
+                    gainNode.gain.setValueAtTime(0.15, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                }
+            } catch (e) {
+                console.error("Audio playback error:", e);
+            }
+        }
+
+        // Canvas & UI DOM Elements
+        const canvas = document.getElementById('pongCanvas');
+        const ctx = canvas.getContext('2d');
+        const playerScoreEl = document.getElementById('playerScore');
+        const cpuScoreEl = document.getElementById('cpuScore');
+        const startOverlay = document.getElementById('startOverlay');
+        const pauseOverlay = document.getElementById('pauseOverlay');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const gameOverTitle = document.getElementById('gameOverTitle');
+        const gameOverSubtitle = document.getElementById('gameOverSubtitle');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+
+        // Game Configuration and State Variables
+        let gameState = 'START'; // START, PLAYING, PAUSED, GAMEOVER
+        let scoreLimit = 7;
+
+        // Base game dimensions designed for responsiveness
+        const BASE_WIDTH = 500;
+        let canvasWidth = BASE_WIDTH;
+        let canvasHeight = 400;
+
+        // Game Objects
+        const paddleWidth = 12;
+        const paddleHeight = 85;
+
+        const player = {
+            x: 20,
+            y: 0,
+            width: paddleWidth,
+            height: paddleHeight,
+            score: 0,
+            color: '#06b6d4' // Cyan neon
+        };
+
+        const cpu = {
+            x: 0,
+            y: 0,
+            width: paddleWidth,
+            height: paddleHeight,
+            score: 0,
+            speed: 4.2,
+            baseSpeed: 4.2,
+            color: '#f43f5e' // Rose neon
+        };
+
+        const ball = {
+            x: 0,
+            y: 0,
+            radius: 8,
+            speedX: 0,
+            speedY: 0,
+            baseSpeed: 5.5,
+            maxSpeed: 13,
+            trail: [] // Stores recent positions for motion blur trail effect
+        };
+
+        // Resize function maintaining absolute responsiveness and strict height boundaries
+        function resizeGame() {
+            canvasWidth = BASE_WIDTH;
+            // Height calculation strictly bounded by window aspect and max 550px
+            canvasHeight = Math.min(window.innerHeight * 0.72, 550);
+            if (canvasHeight < 300) canvasHeight = 300; // minimum playability height
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+
+            // Recalculate object positions relative to new canvas boundaries to prevent clipping
+            player.x = 20;
+            if (player.y + player.height > canvasHeight) {
+                player.y = canvasHeight - player.height;
+            }
+
+            cpu.x = canvasWidth - 20 - cpu.width;
+            if (cpu.y + cpu.height > canvasHeight) {
+                cpu.y = canvasHeight - cpu.height;
+            }
+
+            // If game is in start state, position ball and paddles cleanly in center
+            if (gameState === 'START') {
+                player.y = (canvasHeight - player.height) / 2;
+                cpu.y = (canvasHeight - cpu.height) / 2;
+                ball.x = canvasWidth / 2;
+                ball.y = canvasHeight / 2;
+            }
+        }
+
+        window.addEventListener('resize', resizeGame);
+        resizeGame();
+
+        // Reset ball configuration after scoring
+        function resetBall(servingPlayer = 'player') {
+            ball.x = canvasWidth / 2;
+            ball.y = canvasHeight / 2;
+            ball.trail = [];
+
+            const angle = (Math.random() * Math.PI / 3) - (Math.PI / 6); // random angle within +/- 30 degrees
+            const direction = servingPlayer === 'player' ? 1 : -1;
+            
+            ball.speedX = direction * ball.baseSpeed * Math.cos(angle);
+            ball.speedY = ball.baseSpeed * Math.sin(angle);
+        }
+
+        // Initialize full game match
+        function startNewGame() {
+            initAudio();
+            player.score = 0;
+            cpu.score = 0;
+            cpu.speed = cpu.baseSpeed;
+            playerScoreEl.textContent = '0';
+            cpuScoreEl.textContent = '0';
+
+            player.y = (canvasHeight - player.height) / 2;
+            cpu.y = (canvasHeight - cpu.height) / 2;
+
+            startOverlay.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => startOverlay.classList.add('hidden'), 300);
+            pauseOverlay.classList.add('hidden');
+            gameOverOverlay.classList.add('hidden');
+
+            gameState = 'PLAYING';
+            resetBall(Math.random() > 0.5 ? 'player' : 'cpu');
+        }
+
+        // Event Listeners for Game Controls
+        startBtn.addEventListener('click', startNewGame);
+        playAgainBtn.addEventListener('click', startNewGame);
+
+        pauseBtn.addEventListener('click', () => {
+            if (gameState === 'PLAYING') {
+                gameState = 'PAUSED';
+                pauseOverlay.classList.remove('hidden');
+            }
+        });
+
+        resumeBtn.addEventListener('click', () => {
+            if (gameState === 'PAUSED') {
+                gameState = 'PLAYING';
+                pauseOverlay.classList.add('hidden');
+            }
+        });
+
+        // Smooth Mouse and Touch movement handlers for left paddle
+        function updatePlayerPosition(clientY) {
+            if (gameState !== 'PLAYING') return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleY = canvas.height / rect.height;
+            const relativeY = (clientY - rect.top) * scaleY;
+            player.y = relativeY - player.height / 2;
+
+            // Enforce top and bottom boundaries dynamically
+            if (player.y < 0) player.y = 0;
+            if (player.y > canvasHeight - player.height) {
+                player.y = canvasHeight - player.height;
+            }
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            updatePlayerPosition(e.clientY);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                updatePlayerPosition(e.touches[0].clientY);
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                updatePlayerPosition(e.touches[0].clientY);
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // AI Logic for Right Paddle (increases speed by 5% per score earned)
+        function updateAI() {
+            const centerCPU = cpu.y + cpu.height / 2;
+            const targetY = ball.y;
+
+            // Intelligent tracking with slight dampening to make it human-like yet competitive
+            if (centerCPU < targetY - 12) {
+                cpu.y += cpu.speed;
+            } else if (centerCPU > targetY + 12) {
+                cpu.y -= cpu.speed;
+            }
+
+            // Enforce upper and lower canvas boundaries for AI
+            if (cpu.y < 0) cpu.y = 0;
+            if (cpu.y > canvasHeight - cpu.height) {
+                cpu.y = canvasHeight - cpu.height;
+            }
+        }
+
+        // Main game physics loop
+        function updateGame() {
+            if (gameState !== 'PLAYING') return;
+
+            // Update ball motion blur trail
+            ball.trail.push({ x: ball.x, y: ball.y });
+            if (ball.trail.length > 8) {
+                ball.trail.shift();
+            }
+
+            // Move ball
+            ball.x += ball.speedX;
+            ball.y += ball.speedY;
+
+            // Collision with top and bottom walls (dynamic boundaries synchronized with canvasHeight)
+            if (ball.y - ball.radius <= 0) {
+                ball.y = ball.radius;
+                ball.speedY *= -1;
+                playSound('wall');
+            } else if (ball.y + ball.radius >= canvasHeight) {
+                ball.y = canvasHeight - ball.radius;
+                ball.speedY *= -1;
+                playSound('wall');
+            }
+
+            // Collision with Player Paddle (Left)
+            if (
+                ball.x - ball.radius <= player.x + player.width &&
+                ball.x + ball.radius >= player.x &&
+                ball.y >= player.y &&
+                ball.y <= player.y + player.height
+            ) {
+                playSound('paddle');
+                ball.x = player.x + player.width + ball.radius; // prevent sticking
+
+                // Calculate bounce angle based on hit position on paddle
+                const hitOffset = ball.y - (player.y + player.height / 2);
+                const normalizedOffset = hitOffset / (player.height / 2);
+                const bounceAngle = normalizedOffset * (Math.PI / 3); // max 60 degrees
+
+                let currentSpeed = Math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY);
+                currentSpeed = Math.min(currentSpeed * 1.05, ball.maxSpeed); // slight speed increase on hit
+
+                ball.speedX = currentSpeed * Math.cos(bounceAngle);
+                ball.speedY = currentSpeed * Math.sin(bounceAngle);
+            }
+
+            // Collision with CPU Paddle (Right)
+            if (
+                ball.x + ball.radius >= cpu.x &&
+                ball.x - ball.radius <= cpu.x + cpu.width &&
+                ball.y >= cpu.y &&
+                ball.y <= cpu.y + cpu.height
+            ) {
+                playSound('paddle');
+                ball.x = cpu.x - ball.radius; // prevent sticking
+
+                const hitOffset = ball.y - (cpu.y + cpu.height / 2);
+                const normalizedOffset = hitOffset / (cpu.height / 2);
+                const bounceAngle = normalizedOffset * (Math.PI / 3);
+
+                let currentSpeed = Math.sqrt(ball.speedX * ball.speedX + ball.speedY * ball.speedY);
+                currentSpeed = Math.min(currentSpeed * 1.05, ball.maxSpeed);
+
+                ball.speedX = -currentSpeed * Math.cos(bounceAngle);
+                ball.speedY = currentSpeed * Math.sin(bounceAngle);
+            }
+
+            // Update AI position
+            updateAI();
+
+            // Scoring Checks
+            // CPU scores (ball goes past left boundary)
+            if (ball.x < 0) {
+                playSound('score');
+                cpu.score++;
+                cpuScoreEl.textContent = cpu.score;
+                // Increase AI speed by 5% every time score changes
+                cpu.speed *= 1.05;
+
+                if (cpu.score >= scoreLimit) {
+                    endGame('DEFEAT');
+                } else {
+                    resetBall('player');
+                }
+            }
+
+            // Player scores (ball goes past right boundary)
+            if (ball.x > canvasWidth) {
+                playSound('score');
+                player.score++;
+                playerScoreEl.textContent = player.score;
+
+                if (player.score >= scoreLimit) {
+                    endGame('VICTORY');
+                } else {
+                    resetBall('cpu');
+                }
+            }
+        }
+
+        // End Game handling with victory / defeat modal screen
+        function endGame(result) {
+            gameState = 'GAMEOVER';
+            playSound('win');
+            gameOverOverlay.classList.remove('hidden');
+
+            if (result === 'VICTORY') {
+                gameOverTitle.textContent = 'VICTORY';
+                gameOverTitle.className = 'text-4xl sm:text-5xl font-black mb-3 tracking-widest text-cyan-400 neon-glow-cyan text-center';
+                gameOverSubtitle.textContent = 'You successfully defeated the cyberpunk AI master!';
+            } else {
+                gameOverTitle.textContent = 'DEFEAT';
+                gameOverTitle.className = 'text-4xl sm:text-5xl font-black mb-3 tracking-widest text-rose-500 neon-glow-pink text-center';
+                gameOverSubtitle.textContent = 'The AI overpowered your defense. Try again!';
+            }
+        }
+
+        // Render graphics onto canvas with neon glowing cyberpunk aesthetics
+        function drawScene() {
+            // Clear canvas with dark futuristic background
+            ctx.fillStyle = '#030712';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            // Draw center cyberpunk net (dashed glowing line)
+            ctx.save();
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.25)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(canvasWidth / 2, 0);
+            ctx.lineTo(canvasWidth / 2, canvasHeight);
+            ctx.stroke();
+            ctx.restore();
+
+            // Draw table top and bottom neon border guides
+            ctx.save();
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#06b6d4';
+            ctx.shadowBlur = 10;
+            // Top border
+            ctx.beginPath();
+            ctx.moveTo(0, 2);
+            ctx.lineTo(canvasWidth, 2);
+            ctx.stroke();
+            // Bottom border
+            ctx.beginPath();
+            ctx.moveTo(0, canvasHeight - 2);
+            ctx.lineTo(canvasWidth, canvasHeight - 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Draw ball motion blur trail
+            for (let i = 0; i < ball.trail.length; i++) {
+                const alpha = (i + 1) / ball.trail.length * 0.4;
+                const radius = ball.radius * ((i + 1) / ball.trail.length);
+                ctx.save();
+                ctx.fillStyle = `rgba(6, 182, 212, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(ball.trail[i].x, ball.trail[i].y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Draw Ball (Glowing Cyan Neon Sphere)
+            ctx.save();
+            ctx.fillStyle = '#22d3ee';
+            ctx.shadowColor = '#06b6d4';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Draw Player Paddle (Cyan Neon)
+            ctx.save();
+            ctx.fillStyle = player.color;
+            ctx.shadowColor = player.color;
+            ctx.shadowBlur = 15;
+            ctx.roundRect(player.x, player.y, player.width, player.height, 6);
+            ctx.fill();
+            ctx.restore();
+
+            // Draw CPU Paddle (Rose Neon)
+            ctx.save();
+            ctx.fillStyle = cpu.color;
+            ctx.shadowColor = cpu.color;
+            ctx.shadowBlur = 15;
+            ctx.roundRect(cpu.x, cpu.y, cpu.width, cpu.height, 6);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // 60fps Main Game Loop
+        function gameLoop() {
+            updateGame();
+            drawScene();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize animation loop on window load
+        window.onload = function() {
+            resizeGame();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
