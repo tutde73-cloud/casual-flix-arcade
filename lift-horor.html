@@ -2,9 +2,8 @@
 <html lang="id" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lift Lantai 13 - The Chaos Arcade</title>
-    <meta name="description" content="Mainkan game horor tebak angka Lift Lantai 13 secara solo langsung di browser. Selamatkan diri dari kegelapan!">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -12,7 +11,7 @@
             theme: {
                 extend: {
                     colors: {
-                        darkbg: '#0f172a',
+                        darkbg: '#05050a',
                         neonpink: '#f43f5e',
                         neongreen: '#10b981',
                         neonpurple: '#8b5cf6'
@@ -21,191 +20,205 @@
             }
         }
     </script>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #05050a; font-family: sans-serif;
+            touch-action: manipulation;
+        }
+    </style>
 </head>
-<body class="bg-darkbg text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white flex flex-col justify-between">
+<body class="flex flex-col justify-between h-screen w-screen select-none text-slate-100">
 
-    <!-- Header -->
-    <header class="border-b border-slate-800 bg-darkbg/80 backdrop-blur-md">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="index.html" class="text-slate-300 hover:text-purple-400 text-sm font-semibold transition flex items-center gap-1">
-                ← Kembali ke Portal
-            </a>
-            <h1 class="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
-                LIFT LANTAI 13 🔦
-            </h1>
+    <!-- Top UI Bar -->
+    <header class="flex justify-between items-center px-4 py-3 bg-slate-900/90 border-b border-slate-800 backdrop-blur-md z-30">
+        <a href="index.html" class="text-xs font-bold text-slate-400 hover:text-white transition">← Keluar</a>
+        <div class="flex gap-3 text-xs font-black">
+            <span id="levelBadge" class="bg-slate-800 px-2.5 py-1 rounded-md text-neonpurple border border-slate-700">LVL 1</span>
+            <span class="text-neongreen self-center">SKOR: <span id="scoreVal">0</span></span>
+            <span class="text-neonpink self-center">BATERAI: <span id="batteryVal">100%</span></span>
         </div>
     </header>
 
-    <!-- Game Arena -->
-    <main class="max-w-xl w-full mx-auto px-4 py-8 flex-grow flex flex-col justify-center">
-        <div class="bg-slate-900 border-2 border-purple-500/50 rounded-3xl p-6 shadow-2xl shadow-purple-500/10">
-            <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
-                <div>
-                    <h3 class="text-xl font-black text-white">Horor Psikologis</h3>
-                    <p class="text-slate-400 text-xs mt-1">Tebak kombinasi angka darurat sebelum baterai habis!</p>
-                </div>
-                <div class="flex gap-3 text-center">
-                    <div class="bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
-                        <span class="block text-[9px] text-slate-400 uppercase">Lantai</span>
-                        <span id="floorVal" class="text-lg font-black text-purple-400">13</span>
-                    </div>
-                    <div class="bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
-                        <span class="block text-[9px] text-slate-400 uppercase">Baterai Senter</span>
-                        <span id="batteryVal" class="text-lg font-black text-neonpink">100%</span>
-                    </div>
+    <!-- Main Game Arena -->
+    <main class="relative flex-grow flex items-center justify-center p-4">
+        
+        <!-- Start Overlay -->
+        <div id="startOverlay" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center z-40">
+            <span class="text-5xl mb-3 animate-pulse">🔦</span>
+            <h1 class="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-rose-500 mb-2">
+                LIFT LANTAI 13: HORROR PUZZLE
+            </h1>
+            <p class="text-slate-400 text-xs max-w-xs mb-6">
+                Lift terjebak dalam kegelapan. Masukkan kode tebakan lantai dengan cepat sebelum baterai senter habis total!
+            </p>
+            <button onclick="startGame()" class="bg-gradient-to-r from-purple-600 to-rose-600 text-white font-black px-8 py-3.5 rounded-xl shadow-lg active:scale-95 transition text-sm">
+                Masuk Lift 🚪
+            </button>
+        </div>
+
+        <!-- Game Over / Win Overlay -->
+        <div id="gameOverOverlay" class="absolute inset-0 bg-slate-950/95 hidden flex flex-col items-center justify-center p-6 text-center z-40">
+            <span id="endEmoji" class="text-5xl mb-2">💀</span>
+            <h2 id="endTitle" class="text-2xl font-black text-neonpink mb-1">BATERAI HABIS!</h2>
+            <p class="text-slate-300 text-xs mb-4" id="endDesc">Makhluk di dalam lift menangkapmu...</p>
+            <button onclick="startGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2.5 rounded-xl transition text-sm">
+                Coba Lagi 🔄
+            </button>
+        </div>
+
+        <!-- Panel Lift Horror Interaktif -->
+        <div class="bg-slate-900 border-2 border-purple-500/30 rounded-3xl p-5 max-w-xs w-full shadow-2xl flex flex-col items-center">
+            
+            <!-- Layar Indikator Lantai & Petunjuk -->
+            <div class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-4 text-center">
+                <span class="text-[10px] uppercase text-slate-500 tracking-widest block mb-1">Target Kombinasi</span>
+                <div id="targetDisplay" class="text-2xl font-black text-yellow-400 tracking-wider mb-2">--?--</div>
+                <div class="text-xs text-slate-300 bg-slate-900 py-1.5 px-3 rounded-lg border border-slate-800 inline-block">
+                    Input: <span id="inputDisplay" class="font-mono font-bold text-neongreen tracking-widest">_</span>
                 </div>
             </div>
 
-            <!-- Area Bermain -->
-            <div class="relative bg-slate-950 rounded-2xl border border-slate-800 p-6 text-center">
-                
-                <!-- Start Overlay -->
-                <div id="startOverlay" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center z-20 rounded-2xl">
-                    <span class="text-4xl mb-3">👻</span>
-                    <h4 class="text-xl font-bold text-white mb-2">Terjebak di Kegelapan!</h4>
-                    <p class="text-slate-400 text-xs max-w-xs mb-6">Lift macet. Masukkan kombinasi angka yang benar sesuai petunjuk sebelum sentermu mati total.</p>
-                    <button onclick="startHorrorGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition transform hover:scale-105 text-sm">
-                        Nyalakan Senter & Main!
-                    </button>
-                </div>
-
-                <!-- Game Over Overlay -->
-                <div id="gameOverOverlay" class="absolute inset-0 bg-slate-950/95 hidden flex flex-col items-center justify-center p-6 text-center z-20 rounded-2xl">
-                    <span class="text-4xl mb-2">💀</span>
-                    <h4 id="endTitle" class="text-2xl font-black text-neonpink mb-1">Senter Padam!</h4>
-                    <p id="endDesc" class="text-slate-300 text-xs mb-4">Kamu terjebak selamanya di lantai 13.</p>
-                    <button onclick="startHorrorGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-5 py-2 rounded-xl transition text-sm">
-                        Coba Lagi 🔄
-                    </button>
-                </div>
-
-                <!-- Game Content -->
-                <div id="gamePlayArea" class="py-4">
-                    <p class="text-slate-400 text-xs mb-2">Petunjuk Kode Rahasia:</p>
-                    <div id="clueBox" class="text-2xl font-mono font-bold text-purple-300 tracking-widest bg-slate-900 py-3 rounded-xl border border-slate-800 mb-6">
-                        ? ? ?
-                    </div>
-
-                    <div class="flex justify-center gap-2 mb-4">
-                        <input type="number" id="playerInput" placeholder="Ketik angka..." class="bg-slate-900 border border-slate-700 text-white text-center font-bold text-lg rounded-xl px-4 py-2 w-48 focus:outline-none focus:border-purple-500" autocomplete="off">
-                        <button onclick="checkAnswer()" class="bg-neongreen hover:bg-emerald-600 text-slate-950 font-bold px-5 py-2 rounded-xl transition">
-                            Kirim
-                        </button>
-                    </div>
-                    <p id="messageAlert" class="text-xs text-slate-400 h-4"></p>
-                </div>
+            <!-- Tombol Numpad Angka 1-9 & Aksi -->
+            <div class="grid grid-cols-3 gap-2.5 w-full">
+                <button onclick="pressNum('1')" class="bg-slate-800 hover:bg-slate-700 active:bg-purple-600 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">1</button>
+                <button onclick="pressNum('2')" class="bg-slate-800 hover:bg-slate-700 active:bg-purple-600 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">2</button>
+                <button onclick="pressNum('3')" class="bg-slate-800 hover:bg-slate-700 active:bg-purple-600 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">3</button>
+                <button onclick="pressNum('4')" class="bg-slate-800 hover:bg-slate-700 active:bg-purple-600 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">4</button>
+                <button onclick="pressNum('5')" class="bg-slate-800 hover:bg-slate-700 active:bg-purple-600 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">5</button>
+                <button onclick="pressNum('6')" class="bg-slate-800 hover:bg-slate-700 active:bg-purple-600 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">6</button>
+                <button onclick="pressNum('7')" class="bg-slate-800 hover:bg-slate-700 active:bg-purple-600 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">7</button>
+                <button onclick="pressNum('8')" class="bg-slate-800 hover:bg-slate-700 active:bg-purple-600 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">8</button>
+                <button onclick="pressNum('9')" class="bg-slate-800 hover:bg-slate-700 active:bg-purple-600 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">9</button>
+                <button onclick="clearInput()" class="bg-rose-950/50 hover:bg-rose-900/50 text-rose-400 font-bold py-3 rounded-xl text-xs transition border border-rose-900/50">DEL</button>
+                <button onclick="pressNum('0')" class="bg-slate-800 hover:bg-slate-700 active:bg-purple-600 text-white font-black py-3 rounded-xl text-lg transition border border-slate-700">0</button>
+                <button onclick="submitCode()" class="bg-neongreen hover:bg-emerald-600 text-slate-950 font-black py-3 rounded-xl text-xs transition shadow-lg">KIRIM</button>
             </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 The Chaos Arcade</p>
+    <footer class="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+        <p>&copy; 2026 The Chaos Arcade. Horror Puzzle Engine.</p>
     </footer>
 
-    <!-- Script Game Horor -->
+    <!-- Script Logika Game Lift & Level -->
     <script>
-        let targetCode = 0;
+        let score = 0;
         let battery = 100;
-        let floor = 13;
-        let gameTimer = null;
+        let currentLevel = 1;
+        let targetCode = "";
+        let inputCode = "";
         let isPlaying = false;
+        let batteryInterval = null;
 
-        const floorVal = document.getElementById('floorVal');
+        const scoreVal = document.getElementById('scoreVal');
         const batteryVal = document.getElementById('batteryVal');
+        const levelBadge = document.getElementById('levelBadge');
+        const targetDisplay = document.getElementById('targetDisplay');
+        const inputDisplay = document.getElementById('inputDisplay');
         const startOverlay = document.getElementById('startOverlay');
         const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const endEmoji = document.getElementById('endEmoji');
         const endTitle = document.getElementById('endTitle');
         const endDesc = document.getElementById('endDesc');
-        const clueBox = document.getElementById('clueBox');
-        const playerInput = document.getElementById('playerInput');
-        const messageAlert = document.getElementById('messageAlert');
 
-        function startHorrorGame() {
+        function startGame() {
+            score = 0;
             battery = 100;
-            floor = 13;
-            batteryVal.textContent = battery + '%';
-            floorVal.textContent = floor;
+            currentLevel = 1;
+            updateUI();
             startOverlay.classList.add('hidden');
             gameOverOverlay.classList.add('hidden');
-            playerInput.value = '';
-            messageAlert.textContent = '';
             isPlaying = true;
 
-            generateNewPuzzle();
+            generateNewTarget();
 
-            // Pengurasan baterai senter tiap detik
-            if (gameTimer) clearInterval(gameTimer);
-            gameTimer = setInterval(() => {
+            if (batteryInterval) clearInterval(batteryInterval);
+            batteryInterval = setInterval(() => {
                 if (!isPlaying) return;
-                battery -= 4; // Berkurang 4% per detik
-                batteryVal.textContent = battery + '%';
+                // Baterai makin cepat habis di level tinggi
+                let drainRate = currentLevel === 1 ? 1 : (currentLevel === 2 ? 1.5 : 2.2);
+                battery -= drainRate;
+                batteryVal.textContent = Math.max(0, Math.floor(battery)) + '%';
 
                 if (battery <= 0) {
-                    endHorrorGame(false);
+                    endGame(false);
                 }
             }, 1000);
         }
 
-        function generateNewPuzzle() {
-            // Buat angka acak 2 digit (10 - 99)
-            targetCode = Math.floor(Math.random() * 90) + 10;
+        function generateNewTarget() {
+            inputCode = "";
+            inputDisplay.textContent = "_";
             
-            // Berikan clue matematis sederhana
-            let a = Math.floor(Math.random() * (targetCode - 5));
-            let b = targetCode - a;
-            clueBox.textContent = `${a} + ${b} = ?`;
-            playerInput.value = '';
-            playerInput.focus();
+            // Panjang digit kombinasi naik tiap level (Level 1: 3 digit, Level 2: 4 digit, Level 3: 5 digit)
+            let digits = currentLevel === 1 ? 3 : (currentLevel === 2 ? 4 : 5);
+            targetCode = "";
+            for (let i = 0; i < digits; i++) {
+                targetCode += Math.floor(Math.random() * 10);
+            }
+            targetDisplay.textContent = targetCode;
         }
 
-        function checkAnswer() {
+        function pressNum(num) {
             if (!isPlaying) return;
-            const userAnswer = parseInt(playerInput.value);
-
-            if (userAnswer === targetCode) {
-                floor--;
-                floorVal.textContent = floor;
-                messageAlert.textContent = "Berhasil naik satu lantai! Senter sedikit terisi.";
-                messageAlert.className = "text-xs text-neongreen h-4 font-semibold";
-                
-                // Bonus baterai kalau benar
-                battery = Math.min(100, battery + 15);
-                batteryVal.textContent = battery + '%';
-
-                if (floor <= 0) {
-                    endHorrorGame(true); // Menang lolos dari lantai 13
-                } else {
-                    generateNewPuzzle();
-                }
-            } else {
-                messageAlert.textContent = "Kode Salah! Baterai tersedot!";
-                messageAlert.className = "text-xs text-neonpink h-4 font-semibold";
-                battery = Math.max(0, battery - 10);
-                batteryVal.textContent = battery + '%';
-                playerInput.value = '';
-                if (battery <= 0) endHorrorGame(false);
+            let maxDigits = currentLevel === 1 ? 3 : (currentLevel === 2 ? 4 : 5);
+            if (inputCode.length < maxDigits) {
+                inputCode += num;
+                inputDisplay.textContent = inputCode;
             }
         }
 
-        // Enter key support
-        playerInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') checkAnswer();
-        });
+        function clearInput() {
+            if (!isPlaying) return;
+            inputCode = "";
+            inputDisplay.textContent = "_";
+        }
 
-        function endHorrorGame(isWin) {
+        function submitCode() {
+            if (!isPlaying) return;
+            if (inputCode === targetCode) {
+                // Benar! Tambah skor & pulihkan sedikit baterai
+                score += 15;
+                battery = Math.min(100, battery + 15);
+                
+                // Sistem Level berdasarkan skor
+                if (score >= 90) currentLevel = 3;
+                else if (score >= 45) currentLevel = 2;
+
+                levelBadge.textContent = "LVL " + currentLevel;
+                updateUI();
+                generateNewTarget();
+            } else {
+                // Salah! Penalti pengurangan baterai
+                battery = Math.max(0, battery - 15);
+                inputCode = "";
+                inputDisplay.textContent = "SALAH! ❌";
+                setTimeout(() => { if(isPlaying) inputDisplay.textContent = "_"; }, 600);
+            }
+        }
+
+        function updateUI() {
+            scoreVal.textContent = score;
+            batteryVal.textContent = Math.floor(battery) + '%';
+        }
+
+        function endGame(isWin) {
             isPlaying = false;
-            clearInterval(gameTimer);
+            clearInterval(batteryInterval);
             gameOverOverlay.classList.remove('hidden');
 
             if (isWin) {
-                endTitle.textContent = "Berhasil Selamat!";
+                endEmoji.textContent = "🎉";
+                endTitle.textContent = "BERHASIL KELUAR LIFT!";
                 endTitle.className = "text-2xl font-black text-neongreen mb-1";
-                endDesc.textContent = "Kamu berhasil keluar dari Lift Lantai 13 hidup-hidup!";
+                endDesc.textContent = `Kamu selamat dengan skor ${score} di Level ${currentLevel}!`;
             } else {
-                endTitle.textContent = "Senter Padam!";
+                endEmoji.textContent = "💀";
+                endTitle.textContent = "BATERAI HABIS!";
                 endTitle.className = "text-2xl font-black text-neonpink mb-1";
-                endDesc.textContent = "Kegelapan menelanmu. Gagal keluar dari lantai 13.";
+                endDesc.textContent = `Makhluk di lantai 13 menangkapmu. Skor akhir: ${score}`;
             }
         }
     </script>
