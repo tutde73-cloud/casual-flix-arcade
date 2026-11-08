@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Chaos Arcade - Portal Game Mabar Online & Seru Bareng Teman</title>
+    <meta name="description" content="Mainkan kumpulan game multiplayer online paling kacau, memacu adrenalin, dan bikin emosi bareng teman langsung di browser tanpa download!">
+    <meta name="keywords" content="game mabar online, game web multiplayer, game co-op chaos, game horor browser, the chaos arcade">
+    
+    <!-- Open Graph / Social Media Preview -->
+    <meta property="og:title" content="The Chaos Arcade - Portal Game Mabar Online">
+    <meta property="og:description" content="Kumpulan game online paling seru, aneh, dan panik buat mabar bareng temen. Langsung main di browser!">
+    <meta property="og:type" content="website">
+    
+    <!-- Tailwind CSS CDN untuk Styling Cepat & Responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a',
+                        neonpink: '#f43f5e',
+                        neongreen: '#10b981',
+                        neonpurple: '#8b5cf6'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-darkbg text-slate-100 min-h-screen font-sans antialiased selection:bg-neonpink selection:text-white">
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-slate-800 sticky top-0 z-50 bg-darkbg/80 backdrop-blur-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-neonpink via-purple-400 to-neongreen">
+                THE CHAOS ARCADE ⚡
+            </h1>
+            <nav class="hidden md:flex gap-6 text-sm font-medium text-slate-300">
+                <a href="#games" class="hover:text-neonpink transition">Daftar Game</a>
+                <a href="#about" class="hover:text-neonpink transition">Tentang Kami</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="max-w-6xl mx-auto px-4 py-16 text-center">
+        <span class="inline-block bg-neonpink/10 text-neonpink text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 border border-neonpink/20">
+            🔥 Portal Mabar Paling Rusuh 2026
+        </span>
+        <h2 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
+            Siap Bikin Temen-mu <span class="text-neonpink">Emosi</span> & <span class="text-neongreen">Panik?</span>
+        </h2>
+        <p class="text-slate-400 max-w-2xl mx-auto text-lg mb-8">
+            Kumpulan game web multiplayer online dengan genre aneh, penuh teror psikologis, panik bersama, dan fisika absurd. Cukup share link, langsung mabar tanpa instalasi!
+        </p>
+        <a href="#games" class="bg-gradient-to-r from-neonpink to-purple-600 text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-neonpink/20 hover:scale-105 transition transform inline-block">
+            Pilih Game & Mulai Mabar 🚀
+        </a>
+    </section>
+
+    <!-- Daftar Game Grid (SEO Optimized Landing Cards) -->
+    <section id="games" class="max-w-6xl mx-auto px-4 py-12">
+        <h3 class="text-2xl font-bold mb-8 border-l-4 border-neonpink pl-4">Zona Kekacauan Pilihan</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Game 1: Co-op Chaos -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-neonpink transition group">
+                <div class="text-3xl mb-4">🍳</div>
+                <h4 class="text-xl font-bold mb-2 group-hover:text-neonpink transition">Dapur Panik (Co-op Chaos)</h4>
+                <p class="text-slate-400 text-sm mb-4">
+                    Kerja sama panik bikin pesanan restoran sebelum dapur meledak. Saling salah-salahan lewat voice chat dijamin pecah!
+                </p>
+                <button onclick="alert('Fitur Room Multiplayer segera aktif di GitHub Commit berikutnya!')" class="w-full bg-slate-800 hover:bg-neonpink text-white font-semibold py-2 rounded-lg transition text-sm">
+                    Buat Room Mabar
+                </button>
+            </div>
+
+            <!-- Game 2: Asymmetric Horror -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-purple-500 transition group">
+                <div class="text-3xl mb-4">🔦</div>
+                <h4 class="text-xl font-bold mb-2 group-hover:text-purple-400 transition">Lift Lantai 13 (Horor Psikologis)</h4>
+                <p class="text-slate-400 text-sm mb-4">
+                    Satu orang jadi monster di lorong gelap, teman yang lain harus pecahkan teka-teki sandi sebelum baterai senter habis.
+                </p>
+                <button onclick="alert('Fitur Room Multiplayer segera aktif di GitHub Commit berikutnya!')" class="w-full bg-slate-800 hover:bg-purple-600 text-white font-semibold py-2 rounded-lg transition text-sm">
+                    Masuk Labirin
+                </button>
+            </div>
+
+            <!-- Game 3: Social Deduction -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-neongreen transition group">
+                <div class="text-3xl mb-4">🕵️‍♂️</div>
+                <h4 class="text-xl font-bold mb-2 group-hover:text-neongreen transition">Siapa Maling Data? (Social Deduction)</h4>
+                <p class="text-slate-400 text-sm mb-4">
+                    Perbaiki sistem server kantor, tapi waspada ada satu penyusup rahasia yang mensabotase tugas kalian secara diam-diam.
+                </p>
+                <button onclick="alert('Fitur Room Multiplayer segera aktif di GitHub Commit berikutnya!')" class="w-full bg-slate-800 hover:bg-neongreen text-slate-950 font-bold py-2 rounded-lg transition text-sm">
+                    Mulai Rapat Darurat
+                </button>
+            </div>
+
+            <!-- Game 4: Clumsy Physics -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-yellow-500 transition group">
+                <div class="text-3xl mb-4">🧶</div>
+                <h4 class="text-xl font-bold mb-2 group-hover:text-yellow-400 transition">Jelly Jatuh (Clumsy Physics)</h4>
+                <p class="text-slate-400 text-sm mb-4">
+                    Karakter agar-agar yang licin dan susah dikontrol harus balapan naik tebing es miring tanpa terpeleset ke jurang.
+                </p>
+                <button onclick="alert('Fitur Room Multiplayer segera aktif di GitHub Commit berikutnya!')" class="w-full bg-slate-800 hover:bg-yellow-600 text-white font-semibold py-2 rounded-lg transition text-sm">
+                    Mainkan Fisika Absurd
+                </button>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SEO Content Section (Teks pendukung untuk dibaca Bot Google) -->
+    <section id="about" class="max-w-6xl mx-auto px-4 py-12 border-t border-slate-800 text-slate-400 text-sm leading-relaxed">
+        <h3 class="text-lg font-semibold text-slate-200 mb-3">Tentang The Chaos Arcade</h3>
+        <p class="mb-3">
+            The Chaos Arcade adalah platform portal web game kasual dan multiplayer instan yang dirancang khusus untuk anak muda yang mencari hiburan seru bersama teman (*mabar*). Seluruh game di situs ini dapat dimainkan secara gratis langsung melalui peramban (*browser*) tanpa perlu mengunduh aplikasi tambahan di Google Play Store atau App Store.
+        </p>
+        <p>
+            Nikmati pengalaman bermain game co-op, horor menegangkan, hingga game aksi berbasis fisika kaku yang memacu adrenalin kapan saja dan di mana saja.
+        </p>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-8 text-center text-xs text-slate-500">
+        <p>&copy; 2026 The Chaos Arcade. Dibangun untuk Mabar Tanpa Beban.</p>
+    </footer>
+
+</body>
+</html>
