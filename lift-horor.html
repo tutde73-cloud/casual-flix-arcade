@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lift Lantai 13 - The Chaos Arcade</title>
+    <meta name="description" content="Mainkan game horor tebak angka Lift Lantai 13 secara solo langsung di browser. Selamatkan diri dari kegelapan!">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a',
+                        neonpink: '#f43f5e',
+                        neongreen: '#10b981',
+                        neonpurple: '#8b5cf6'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-darkbg text-slate-100 min-h-screen font-sans antialiased selection:bg-purple-500 selection:text-white flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-darkbg/80 backdrop-blur-md">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="index.html" class="text-slate-300 hover:text-purple-400 text-sm font-semibold transition flex items-center gap-1">
+                ← Kembali ke Portal
+            </a>
+            <h1 class="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                LIFT LANTAI 13 🔦
+            </h1>
+        </div>
+    </header>
+
+    <!-- Game Arena -->
+    <main class="max-w-xl w-full mx-auto px-4 py-8 flex-grow flex flex-col justify-center">
+        <div class="bg-slate-900 border-2 border-purple-500/50 rounded-3xl p-6 shadow-2xl shadow-purple-500/10">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="text-xl font-black text-white">Horor Psikologis</h3>
+                    <p class="text-slate-400 text-xs mt-1">Tebak kombinasi angka darurat sebelum baterai habis!</p>
+                </div>
+                <div class="flex gap-3 text-center">
+                    <div class="bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+                        <span class="block text-[9px] text-slate-400 uppercase">Lantai</span>
+                        <span id="floorVal" class="text-lg font-black text-purple-400">13</span>
+                    </div>
+                    <div class="bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+                        <span class="block text-[9px] text-slate-400 uppercase">Baterai Senter</span>
+                        <span id="batteryVal" class="text-lg font-black text-neonpink">100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Area Bermain -->
+            <div class="relative bg-slate-950 rounded-2xl border border-slate-800 p-6 text-center">
+                
+                <!-- Start Overlay -->
+                <div id="startOverlay" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center z-20 rounded-2xl">
+                    <span class="text-4xl mb-3">👻</span>
+                    <h4 class="text-xl font-bold text-white mb-2">Terjebak di Kegelapan!</h4>
+                    <p class="text-slate-400 text-xs max-w-xs mb-6">Lift macet. Masukkan kombinasi angka yang benar sesuai petunjuk sebelum sentermu mati total.</p>
+                    <button onclick="startHorrorGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition transform hover:scale-105 text-sm">
+                        Nyalakan Senter & Main!
+                    </button>
+                </div>
+
+                <!-- Game Over Overlay -->
+                <div id="gameOverOverlay" class="absolute inset-0 bg-slate-950/95 hidden flex flex-col items-center justify-center p-6 text-center z-20 rounded-2xl">
+                    <span class="text-4xl mb-2">💀</span>
+                    <h4 id="endTitle" class="text-2xl font-black text-neonpink mb-1">Senter Padam!</h4>
+                    <p id="endDesc" class="text-slate-300 text-xs mb-4">Kamu terjebak selamanya di lantai 13.</p>
+                    <button onclick="startHorrorGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-5 py-2 rounded-xl transition text-sm">
+                        Coba Lagi 🔄
+                    </button>
+                </div>
+
+                <!-- Game Content -->
+                <div id="gamePlayArea" class="py-4">
+                    <p class="text-slate-400 text-xs mb-2">Petunjuk Kode Rahasia:</p>
+                    <div id="clueBox" class="text-2xl font-mono font-bold text-purple-300 tracking-widest bg-slate-900 py-3 rounded-xl border border-slate-800 mb-6">
+                        ? ? ?
+                    </div>
+
+                    <div class="flex justify-center gap-2 mb-4">
+                        <input type="number" id="playerInput" placeholder="Ketik angka..." class="bg-slate-900 border border-slate-700 text-white text-center font-bold text-lg rounded-xl px-4 py-2 w-48 focus:outline-none focus:border-purple-500" autocomplete="off">
+                        <button onclick="checkAnswer()" class="bg-neongreen hover:bg-emerald-600 text-slate-950 font-bold px-5 py-2 rounded-xl transition">
+                            Kirim
+                        </button>
+                    </div>
+                    <p id="messageAlert" class="text-xs text-slate-400 h-4"></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 The Chaos Arcade</p>
+    </footer>
+
+    <!-- Script Game Horor -->
+    <script>
+        let targetCode = 0;
+        let battery = 100;
+        let floor = 13;
+        let gameTimer = null;
+        let isPlaying = false;
+
+        const floorVal = document.getElementById('floorVal');
+        const batteryVal = document.getElementById('batteryVal');
+        const startOverlay = document.getElementById('startOverlay');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const endTitle = document.getElementById('endTitle');
+        const endDesc = document.getElementById('endDesc');
+        const clueBox = document.getElementById('clueBox');
+        const playerInput = document.getElementById('playerInput');
+        const messageAlert = document.getElementById('messageAlert');
+
+        function startHorrorGame() {
+            battery = 100;
+            floor = 13;
+            batteryVal.textContent = battery + '%';
+            floorVal.textContent = floor;
+            startOverlay.classList.add('hidden');
+            gameOverOverlay.classList.add('hidden');
+            playerInput.value = '';
+            messageAlert.textContent = '';
+            isPlaying = true;
+
+            generateNewPuzzle();
+
+            // Pengurasan baterai senter tiap detik
+            if (gameTimer) clearInterval(gameTimer);
+            gameTimer = setInterval(() => {
+                if (!isPlaying) return;
+                battery -= 4; // Berkurang 4% per detik
+                batteryVal.textContent = battery + '%';
+
+                if (battery <= 0) {
+                    endHorrorGame(false);
+                }
+            }, 1000);
+        }
+
+        function generateNewPuzzle() {
+            // Buat angka acak 2 digit (10 - 99)
+            targetCode = Math.floor(Math.random() * 90) + 10;
+            
+            // Berikan clue matematis sederhana
+            let a = Math.floor(Math.random() * (targetCode - 5));
+            let b = targetCode - a;
+            clueBox.textContent = `${a} + ${b} = ?`;
+            playerInput.value = '';
+            playerInput.focus();
+        }
+
+        function checkAnswer() {
+            if (!isPlaying) return;
+            const userAnswer = parseInt(playerInput.value);
+
+            if (userAnswer === targetCode) {
+                floor--;
+                floorVal.textContent = floor;
+                messageAlert.textContent = "Berhasil naik satu lantai! Senter sedikit terisi.";
+                messageAlert.className = "text-xs text-neongreen h-4 font-semibold";
+                
+                // Bonus baterai kalau benar
+                battery = Math.min(100, battery + 15);
+                batteryVal.textContent = battery + '%';
+
+                if (floor <= 0) {
+                    endHorrorGame(true); // Menang lolos dari lantai 13
+                } else {
+                    generateNewPuzzle();
+                }
+            } else {
+                messageAlert.textContent = "Kode Salah! Baterai tersedot!";
+                messageAlert.className = "text-xs text-neonpink h-4 font-semibold";
+                battery = Math.max(0, battery - 10);
+                batteryVal.textContent = battery + '%';
+                playerInput.value = '';
+                if (battery <= 0) endHorrorGame(false);
+            }
+        }
+
+        // Enter key support
+        playerInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkAnswer();
+        });
+
+        function endHorrorGame(isWin) {
+            isPlaying = false;
+            clearInterval(gameTimer);
+            gameOverOverlay.classList.remove('hidden');
+
+            if (isWin) {
+                endTitle.textContent = "Berhasil Selamat!";
+                endTitle.className = "text-2xl font-black text-neongreen mb-1";
+                endDesc.textContent = "Kamu berhasil keluar dari Lift Lantai 13 hidup-hidup!";
+            } else {
+                endTitle.textContent = "Senter Padam!";
+                endTitle.className = "text-2xl font-black text-neonpink mb-1";
+                endDesc.textContent = "Kegelapan menelanmu. Gagal keluar dari lantai 13.";
+            }
+        }
+    </script>
+</body>
+</html>
