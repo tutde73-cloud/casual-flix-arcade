@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dapur Panik 3D - The Chaos Arcade</title>
+    <title>Dapur Panik 3D - Serangan Zombie</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -31,10 +31,10 @@
     <!-- Start & Game Over Overlays -->
     <div id="startOverlay" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center z-40">
         <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-emerald-400 mb-2">
-            DAPUR PANIK 🍳
+            DAPUR PANIK: ZOMBIE ATTACK 🧟🍳
         </h1>
         <p class="text-slate-400 text-xs max-w-xs mb-6">
-            Kendalikan koki berkeliling ruangan dapur 3D, kumpulkan bahan masakan, dan hindari kekacauan!
+            Masak di dapur sambil waspada! Ada zombie yang mencoba mendobrak masuk dari kaca jendela dapur.
         </p>
         <button onclick="initGame()" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg">
             Mulai Masak 🚀
@@ -42,7 +42,7 @@
     </div>
 
     <div id="gameOverOverlay" class="absolute inset-0 bg-slate-950/90 hidden flex flex-col items-center justify-center p-6 text-center z-40">
-        <h2 class="text-3xl font-black text-rose-500 mb-2">WAKTU HABIS!</h2>
+        <h2 id="endTitle" class="text-3xl font-black text-rose-500 mb-2">WAKTU HABIS!</h2>
         <p class="text-slate-300 text-sm mb-4">Skor Akhir: <span id="finalScore" class="font-bold text-emerald-400">0</span></p>
         <button onclick="initGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2.5 rounded-xl">
             Main Lagi 🔄
@@ -61,9 +61,9 @@
         </div>
     </div>
 
-    <!-- Script Game 3D Three.js -->
+    <!-- Script Game 3D Three.js dengan Suasana Dapur & Jendela Zombie -->
     <script>
-        let scene, camera, renderer, player;
+        let scene, camera, renderer, player, zombieHead;
         let score = 0, timeLeft = 45, isPlaying = false;
         let gameTimer, itemSpawner;
         let collectibles = [];
@@ -90,7 +90,7 @@
             gameTimer = setInterval(() => {
                 timeLeft--;
                 document.getElementById('timeVal').textContent = timeLeft + 's';
-                if (timeLeft <= 0) endGame();
+                if (timeLeft <= 0) endGame('WAKTU HABIS!');
             }, 1000);
 
             if (itemSpawner) clearInterval(itemSpawner);
@@ -99,8 +99,8 @@
 
         function setupThreeJS() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x090d16);
-            scene.fog = new THREE.FogExp2(0x090d16, 0.05);
+            scene.background = new THREE.Color(0x0f172a);
+            scene.fog = new THREE.FogExp2(0x0f172a, 0.04);
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             
@@ -108,32 +108,68 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            // Pencahayaan Suasana Dapur
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
 
-            const pointLight = new THREE.PointLight(0xf43f5e, 1, 50);
-            pointLight.position.set(0, 10, 0);
-            scene.add(pointLight);
+            const kitchenLight = new THREE.PointLight(0xf59e0b, 1.2, 40); // Lampu gantung dapur warna kuning hangat
+            kitchenLight.position.set(0, 8, 0);
+            scene.add(kitchenLight);
 
+            // Lantai Keramik Dapur
             const floorGeo = new THREE.PlaneGeometry(30, 30);
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4 });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
             scene.add(floor);
 
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
-            const wall1 = new THREE.Mesh(new THREE.BoxGeometry(30, 10, 1), wallMat);
-            wall1.position.set(0, 5, -15);
-            scene.add(wall1);
+            // Dinding Dapur
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+            const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 30), wallMat);
+            wallLeft.position.set(-15, 5, 0);
+            scene.add(wallLeft);
 
-            const wall2 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 30), wallMat);
-            wall2.position.set(-15, 5, 0);
-            scene.add(wall2);
+            const wallRight = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 30), wallMat);
+            wallRight.position.set(15, 5, 0);
+            scene.add(wallRight);
 
-            const wall3 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 30), wallMat);
-            wall3.position.set(15, 5, 0);
-            scene.add(wall3);
+            // Dinding Belakang dengan Jendela Kaca
+            const wallBack = new THREE.Mesh(new THREE.BoxGeometry(30, 10, 1), wallMat);
+            wallBack.position.set(0, 5, -15);
+            scene.add(wallBack);
 
+            // --- KACA JENDELA DAPUR & ZOMBIE ---
+            const glassGeo = new THREE.PlaneGeometry(6, 4);
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.25, roughness: 0.1 });
+            const windowGlass = new THREE.Mesh(glassGeo, glassMat);
+            windowGlass.position.set(0, 4, -14.8);
+            scene.add(windowGlass);
+
+            // Kepala Zombie di Balik Kaca Jendela yang Ingin Masuk
+            const zombieGeo = new THREE.BoxGeometry(1.2, 1.4, 1.2);
+            const zombieMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.7 }); // Kulit hijau zombie
+            zombieHead = new THREE.Mesh(zombieGeo, zombieMat);
+            zombieHead.position.set(0, 4, -15.2);
+            scene.add(zombieHead);
+
+            // Mata Zombie Menyala Merah di Kaca
+            const eyeGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+            const eye1 = new THREE.Mesh(eyeGeo, eyeMat);
+            eye1.position.set(-0.3, 4.2, -14.6);
+            scene.add(eye1);
+            const eye2 = new THREE.Mesh(eyeGeo, eyeMat);
+            eye2.position.set(0.3, 4.2, -14.6);
+            scene.add(eye2);
+
+            // Meja Dapur / Countertop di Tengah Ruangan
+            const counterGeo = new THREE.BoxGeometry(6, 1.5, 2);
+            const counterMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+            const counter = new THREE.Mesh(counterGeo, counterMat);
+            counter.position.set(0, 0.75, -5);
+            scene.add(counter);
+
+            // Karakter Pemain (Koki)
             const playerGeo = new THREE.BoxGeometry(1, 2, 1);
             const playerMat = new THREE.MeshStandardMaterial({ color: 0x10b981 });
             player = new THREE.Mesh(playerGeo, playerMat);
@@ -168,9 +204,9 @@
             const mesh = new THREE.Mesh(geo, mat);
 
             mesh.position.set(
-                (Math.random() - 0.5) * 24,
+                (Math.random() - 0.5) * 20,
                 0.6,
-                (Math.random() - 0.5) * 24
+                (Math.random() - 0.5) * 15
             );
             scene.add(mesh);
             collectibles.push({ mesh, isBad });
@@ -179,6 +215,11 @@
         function animate() {
             requestAnimationFrame(animate);
             if (!isPlaying) return;
+
+            // Efek Zombie Mendobrak Jendela (Kepala bergerak maju-mundur mencoba masuk)
+            if (zombieHead) {
+                zombieHead.position.z = -15.2 + Math.sin(Date.now() * 0.01) * 0.3;
+            }
 
             let speed = 0.15;
             if (keys.ArrowUp || keys.KeyW) player.position.z -= speed;
@@ -218,10 +259,11 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        function endGame() {
+        function endGame(reason) {
             isPlaying = false;
             clearInterval(gameTimer);
             clearInterval(itemSpawner);
+            document.getElementById('endTitle').textContent = reason;
             document.getElementById('finalScore').textContent = score;
             document.getElementById('gameOverOverlay').classList.remove('hidden');
         }
