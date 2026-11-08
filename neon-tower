@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Neon Tower Stack</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap');
+
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      box-sizing: border-box;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at center, #15162c 0%, #080913 100%);
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    .glass-panel {
+      background: rgba(20, 24, 45, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    }
+
+    .glass-btn {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: all 0.2s ease-in-out;
+    }
+
+    .glass-btn:hover {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.5) 0%, rgba(236, 72, 153, 0.5) 100%);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+    }
+
+    .glass-btn:active {
+      transform: translateY(1px);
+    }
+
+    .neon-text-cyan {
+      text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 20px rgba(6, 182, 212, 0.4);
+    }
+
+    .neon-text-gold {
+      text-shadow: 0 0 10px rgba(234, 179, 8, 0.8), 0 0 20px rgba(234, 179, 8, 0.4);
+    }
+
+    .neon-text-pink {
+      text-shadow: 0 0 10px rgba(236, 72, 153, 0.8), 0 0 20px rgba(236, 72, 153, 0.4);
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between items-center p-2 sm:p-4 relative">
+
+  <!-- HUD Header -->
+  <header class="w-full max-w-md glass-panel rounded-2xl p-3 flex justify-between items-center z-10 shadow-lg">
+    <div class="flex items-center space-x-4">
+      <div>
+        <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Floors</p>
+        <p id="scoreEl" class="text-2xl font-black text-cyan-400 neon-text-cyan">0</p>
+      </div>
+      <div class="h-8 w-px bg-white/10"></div>
+      <div>
+        <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Best</p>
+        <p id="highScoreEl" class="text-xl font-black text-amber-400 neon-text-gold">0</p>
+      </div>
+    </div>
+
+    <!-- Health / Lives Counter -->
+    <div class="flex items-center space-x-1 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10" id="livesContainer">
+      <span class="text-rose-500 text-lg">❤️</span>
+      <span class="text-rose-500 text-lg">❤️</span>
+      <span class="text-rose-500 text-lg">❤️</span>
+    </div>
+  </header>
+
+  <!-- Game Canvas Container -->
+  <main id="canvasContainer" class="relative w-full max-w-md flex-1 my-2 sm:my-3 rounded-3xl overflow-hidden glass-panel border border-white/10 flex justify-center items-center">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Floating Perfect Flash Banner -->
+    <div id="comboBanner" class="absolute top-28 left-1/2 -translate-x-1/2 opacity-0 transition-all duration-300 pointer-events-none text-center z-10">
+      <h2 id="comboText" class="text-3xl font-black text-pink-400 neon-text-pink tracking-wider italic">
+        PERFECT!
+      </h2>
+      <p id="comboSub" class="text-xs font-bold text-amber-300 tracking-widest uppercase">+50 BONUS</p>
+    </div>
+
+    <!-- Start Overlay Screen -->
+    <div id="startOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 bg-slate-950/85 backdrop-blur-md">
+      <h1 class="text-4xl sm:text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 tracking-tight">
+        NEON TOWER
+      </h1>
+      <p class="text-slate-300 text-xs sm:text-sm max-w-xs mb-8 leading-relaxed">
+        Stack swinging neon blocks perfectly to construct the ultimate glowing skyscraper!
+      </p>
+
+      <button id="startBtn" class="px-8 py-4 rounded-2xl glass-btn font-extrabold text-lg text-white tracking-wider uppercase">
+        Tap to Build
+      </button>
+
+      <div class="mt-8 flex items-center space-x-3 text-xs text-slate-400">
+        <span>🖱️ Click to Release</span>
+        <span>•</span>
+        <span>👆 Tap Screen</span>
+      </div>
+    </div>
+
+    <!-- Game Over Overlay Screen -->
+    <div id="gameOverOverlay" class="absolute inset-0 flex flex-col justify-center items-center p-6 text-center z-20 hidden bg-black/85 backdrop-blur-md">
+      <h2 class="text-4xl font-black mb-1 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.6)]">
+        TOWER CRASHED!
+      </h2>
+      <p id="newHighScoreTag" class="text-amber-400 text-xs font-bold tracking-widest uppercase mb-4 hidden neon-text-gold">
+        🏆 NEW RECORD FLOORS! 🏆
+      </p>
+
+      <div class="glass-panel rounded-2xl p-4 w-60 mb-6 space-y-2 border border-white/10">
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-slate-400">Floors Built:</span>
+          <span id="finalScoreEl" class="text-xl font-bold text-cyan-400">0</span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-slate-400">Best Height:</span>
+          <span id="bestScoreEl" class="text-xl font-bold text-amber-400">0</span>
+        </div>
+      </div>
+
+      <button id="restartBtn" class="px-8 py-3.5 rounded-2xl glass-btn font-extrabold text-base text-white uppercase tracking-wider">
+        Rebuild Tower
+      </button>
+    </div>
+  </main>
+
+  <script>
+    // --- Synthesized Audio Engine (Web Audio API) ---
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playRelease() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+
+      playLand(isPerfect, combo = 1) {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        // Low impact thud
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+
+        // Chime for perfect fit
+        if (isPerfect) {
+          const chimeOsc = this.ctx.createOscillator();
+          const chimeGain = this.ctx.createGain();
+
+          const pitch = 523.25 * Math.pow(1.05946, Math.min(combo * 2, 16)); // Pitch scales with combo
+          chimeOsc.type = 'sine';
+          chimeOsc.frequency.setValueAtTime(pitch, now);
+          chimeOsc.frequency.exponentialRampToValueAtTime(pitch * 1.2, now + 0.25);
+
+          chimeGain.gain.setValueAtTime(0.35, now);
+          chimeGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+          chimeOsc.connect(chimeGain);
+          chimeGain.connect(this.ctx.destination);
+          chimeOsc.start(now + 0.02);
+          chimeOsc.stop(now + 0.27);
+        }
+      }
+
+      playMiss() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(70, now + 0.35);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+
+      playGameOver() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        [200, 160, 130].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.6, now + idx * 0.12 + 0.3);
+
+          gain.gain.setValueAtTime(0.25, now + idx * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.3);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now + idx * 0.12);
+          osc.stop(now + idx * 0.12 + 0.3);
+        });
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    // --- Particle System ---
+    class Particle {
+      constructor(x, y, color, isBurst = false) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = isBurst ? Math.random() * 4 + 2 : Math.random() * 3 + 1;
+        const speed = isBurst ? 8 : 4;
+        this.vx = (Math.random() - 0.5) * speed;
+        this.vy = (Math.random() - 0.7) * speed;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.03 + 0.02;
+        this.gravity = 0.15;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += this.gravity;
+        this.alpha -= this.decay;
+      }
+
+      draw(ctx, cameraY) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - cameraY, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // --- Neon Colors Preset Palette ---
+    const NEON_PALETTE = [
+      { fill: '#06b6d4', glow: '#0891b2' }, // Cyan
+      { fill: '#ec4899', glow: '#db2777' }, // Pink
+      { fill: '#a3e635', glow: '#65a30d' }, // Lime
+      { fill: '#f59e0b', glow: '#d97706' }, // Gold
+      { fill: '#8b5cf6', glow: '#7c3aed' }, // Purple
+      { fill: '#3b82f6', glow: '#2563eb' }  // Blue
+    ];
+
+    // --- Game Variables ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const canvasContainer = document.getElementById('canvasContainer');
+
+    const scoreEl = document.getElementById('scoreEl');
+    const highScoreEl = document.getElementById('highScoreEl');
+    const livesContainer = document.getElementById('livesContainer');
+    const comboBanner = document.getElementById('comboBanner');
+    const comboText = document.getElementById('comboText');
+    const comboSub = document.getElementById('comboSub');
+
+    const startOverlay = document.getElementById('startOverlay');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const newHighScoreTag = document.getElementById('newHighScoreTag');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const finalScoreEl = document.getElementById('finalScoreEl');
+    const bestScoreEl = document.getElementById('bestScoreEl');
+
+    let gameState = 'START'; // START, PLAYING, GAMEOVER
+    let score = 0;
+    let highScore = parseInt(localStorage.getItem('neon_tower_highscore')) || 0;
+    let lives = 3;
+    let comboCount = 0;
+
+    // Physics & Camera Settings
+    const BLOCK_WIDTH = 100;
+    const BLOCK_HEIGHT = 40;
+    let cameraY = 0;
+    let targetCameraY = 0;
+
+    // Crane Swinging Physics
+    let craneAngle = 0;
+    let craneSpeed = 0.035;
+    let craneLength = 160;
+
+    // Stack Array & Falling Block
+    let stack = [];
+    let fallingBlock = null;
+    let particles = [];
+
+    // Tower Swaying Spring Physics
+    let towerWobbleAngle = 0;
+    let towerWobbleVelocity = 0;
+    const WOBBLE_STIFFNESS = 0.08;
+    const WOBBLE_DAMPING = 0.88;
+
+    // --- Resize Canvas Handler ---
+    function resizeCanvas() {
+      const rect = canvasContainer.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    }
+
+    // --- Game Initialization ---
+    function initGame() {
+      score = 0;
+      lives = 3;
+      comboCount = 0;
+      cameraY = 0;
+      targetCameraY = 0;
+      towerWobbleAngle = 0;
+      towerWobbleVelocity = 0;
+      craneSpeed = 0.035;
+
+      scoreEl.textContent = score;
+      highScoreEl.textContent = highScore;
+      updateLivesUI();
+
+      stack = [];
+      particles = [];
+      fallingBlock = null;
+
+      // Base Foundation Block at bottom center
+      const baseBlock = {
+        x: canvas.width / 2 - BLOCK_WIDTH / 2,
+        y: canvas.height - 80,
+        width: BLOCK_WIDTH,
+        height: BLOCK_HEIGHT,
+        color: NEON_PALETTE[0]
+      };
+      stack.push(baseBlock);
+
+      spawnSwingingBlock();
+    }
+
+    function spawnSwingingBlock() {
+      const topBlock = stack[stack.length - 1];
+      const colorIndex = stack.length % NEON_PALETTE.length;
+      craneAngle = Math.random() * Math.PI * 2; // Random starting phase
+
+      // Slightly increase swing speed as height increases
+      craneSpeed = 0.035 + Math.min(stack.length * 0.0015, 0.035);
+
+      fallingBlock = {
+        isDropped: false,
+        x: 0,
+        y: 0,
+        vy: 0,
+        width: BLOCK_WIDTH,
+        height: BLOCK_HEIGHT,
+        color: NEON_PALETTE[colorIndex]
+      };
+    }
+
+    function updateLivesUI() {
+      let heartsHtml = '';
+      for (let i = 0; i < 3; i++) {
+        if (i < lives) {
+          heartsHtml += `<span class="text-rose-500 text-lg transition-transform scale-100">❤️</span>`;
+        } else {
+          heartsHtml += `<span class="text-slate-600 text-lg opacity-40">🖤</span>`;
+        }
+      }
+      livesContainer.innerHTML = heartsHtml;
+    }
+
+    // --- Particle Explosions ---
+    function createDustBurst(x, y, color, isPerfect = false) {
+      const count = isPerfect ? 24 : 10;
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle(x, y, isPerfect ? '#ffffff' : color.fill, isPerfect));
+      }
+    }
+
+    // --- Flash Perfect Popup ---
+    function triggerComboBanner(text, subtext) {
+      comboText.textContent = text;
+      comboSub.textContent = subtext;
+
+      comboBanner.style.opacity = '1';
+      comboBanner.style.transform = 'translate(-50%, -10px) scale(1.1)';
+
+      setTimeout(() => {
+        comboBanner.style.opacity = '0';
+        comboBanner.style.transform = 'translate(-50%, 0px) scale(1.0)';
+      }, 700);
+    }
+
+    // --- Game Logic Updates ---
+    function releaseBlock() {
+      if (gameState !== 'PLAYING' || !fallingBlock || fallingBlock.isDropped) return;
+
+      sound.init();
+      sound.playRelease();
+      fallingBlock.isDropped = true;
+      fallingBlock.vy = 12; // Initial gravity fall velocity
+    }
+
+    function handleBlockLanding() {
+      const topBlock = stack[stack.length - 1];
+      const dropX = fallingBlock.x;
+      const targetX = topBlock.x;
+
+      const offset = dropX - targetX;
+      const absOffset = Math.abs(offset);
+
+      // 1. Complete Miss Check
+      if (absOffset >= BLOCK_WIDTH) {
+        sound.playMiss();
+        lives--;
+        comboCount = 0;
+        updateLivesUI();
+
+        if (lives <= 0) {
+          triggerGameOver();
+        } else {
+          spawnSwingingBlock();
+        }
+        return;
+      }
+
+      // 2. Successful Placement
+      const landY = topBlock.y - BLOCK_HEIGHT;
+      const newBlock = {
+        x: dropX,
+        y: landY,
+        width: BLOCK_WIDTH,
+        height: BLOCK_HEIGHT,
+        color: fallingBlock.color
+      };
+
+      stack.push(newBlock);
+      score++;
+      scoreEl.textContent = score;
+
+      // 3. Perfect Fit Detection (< 8px offset)
+      const isPerfect = absOffset < 8;
+      if (isPerfect) {
+        comboCount++;
+        // Lock alignment perfectly for clean towers if close
+        newBlock.x = targetX;
+        sound.playLand(true, comboCount);
+        createDustBurst(newBlock.x + BLOCK_WIDTH / 2, landY + BLOCK_HEIGHT, newBlock.color, true);
+
+        const bonus = 50 * comboCount;
+        triggerComboBanner(`PERFECT x${comboCount}!`, `+${bonus} BONUS`);
+      } else {
+        comboCount = 0;
+        sound.playLand(false);
+        createDustBurst(newBlock.x + (offset > 0 ? 0 : BLOCK_WIDTH), landY + BLOCK_HEIGHT, newBlock.color, false);
+
+        // Calculate dynamic stack wobble force based on offset distance & direction
+        const wobbleImpulse = (offset / BLOCK_WIDTH) * 0.15;
+        towerWobbleVelocity += wobbleImpulse;
+      }
+
+      // 4. Update Camera Height Target
+      if (stack.length > 4) {
+        targetCameraY = (stack.length - 4) * BLOCK_HEIGHT;
+      }
+
+      spawnSwingingBlock();
+    }
+
+    function triggerGameOver() {
+      gameState = 'GAMEOVER';
+      sound.playGameOver();
+
+      let isNewHigh = false;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('neon_tower_highscore', highScore);
+        highScoreEl.textContent = highScore;
+        isNewHigh = true;
+      }
+
+      finalScoreEl.textContent = score;
+      bestScoreEl.textContent = highScore;
+
+      if (isNewHigh) {
+        newHighScoreTag.classList.remove('hidden');
+      } else {
+        newHighScoreTag.classList.add('hidden');
+      }
+
+      gameOverOverlay.classList.remove('hidden');
+    }
+
+    // --- Controls Listeners ---
+    canvasContainer.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (gameState === 'PLAYING') {
+        releaseBlock();
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && gameState === 'PLAYING') {
+        releaseBlock();
+      }
+    });
+
+    startBtn.addEventListener('click', () => {
+      sound.init();
+      gameState = 'PLAYING';
+      startOverlay.classList.add('hidden');
+      gameOverOverlay.classList.add('hidden');
+      initGame();
+      requestAnimationFrame(gameLoop);
+    });
+
+    restartBtn.addEventListener('click', () => {
+      sound.init();
+      gameState = 'PLAYING';
+      gameOverOverlay.classList.add('hidden');
+      initGame();
+      requestAnimationFrame(gameLoop);
+    });
+
+    // --- Main Game Loop ---
+    let lastTime = performance.now();
+
+    function gameLoop(now) {
+      if (gameState !== 'PLAYING') return;
+
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      // 1. Smooth Camera Scroll Interpolation
+      cameraY += (targetCameraY - cameraY) * 0.1;
+
+      // 2. Tower Wobble Spring Physics Update
+      const springAcc = -WOBBLE_STIFFNESS * towerWobbleAngle;
+      towerWobbleVelocity += springAcc;
+      towerWobbleVelocity *= WOBBLE_DAMPING;
+      towerWobbleAngle += towerWobbleVelocity;
+
+      // 3. Update Crane Oscillation or Falling Block
+      const craneAnchorX = canvas.width / 2;
+      const craneAnchorY = 60;
+
+      if (fallingBlock) {
+        if (!fallingBlock.isDropped) {
+          craneAngle += craneSpeed;
+          fallingBlock.x = craneAnchorX + Math.sin(craneAngle) * (craneLength - 40) - BLOCK_WIDTH / 2;
+          fallingBlock.y = craneAnchorY + craneLength - cameraY;
+        } else {
+          // Falling under gravity down to current stack top Y level
+          fallingBlock.y += fallingBlock.vy;
+          fallingBlock.vy += 0.6; // Gravity acceleration
+
+          const topBlockY = stack[stack.length - 1].y - cameraY;
+          if (fallingBlock.y + BLOCK_HEIGHT >= topBlockY) {
+            fallingBlock.y = topBlockY - BLOCK_HEIGHT;
+            handleBlockLanding();
+          }
+        }
+      }
+
+      // 4. Update Dust Burst Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        if (particles[i].alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+
+      // Render Scene
+      render(craneAnchorX, craneAnchorY);
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // --- Render Loop ---
+    function render(anchorX, anchorY) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // A. Render Swinging Crane Line & Hook
+      ctx.save();
+      if (fallingBlock && !fallingBlock.isDropped) {
+        const blockCenterX = fallingBlock.x + BLOCK_WIDTH / 2;
+        const blockTopY = fallingBlock.y;
+
+        ctx.beginPath();
+        ctx.moveTo(anchorX, anchorY);
+        ctx.lineTo(blockCenterX, blockTopY);
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.6)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+
+        // Crane Top Anchor Point
+        ctx.beginPath();
+        ctx.arc(anchorX, anchorY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#06b6d4';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#06b6d4';
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // B. Render Stacked Tower Blocks with Wobble Rotation Transform
+      const pivotX = canvas.width / 2;
+      const pivotY = canvas.height - 80 - cameraY;
+
+      ctx.save();
+      // Apply sway rotation from base stack pivot point
+      ctx.translate(pivotX, pivotY);
+      ctx.rotate(towerWobbleAngle);
+      ctx.translate(-pivotX, -pivotY);
+
+      stack.forEach((b, idx) => {
+        const drawY = b.y - cameraY;
+
+        // Skip rendering if way below screen camera view
+        if (drawY > canvas.height + 100) return;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(b.x, drawY, b.width, b.height, 8);
+        ctx.fillStyle = b.color.fill;
+        ctx.shadowBlur = idx === stack.length - 1 ? 16 : 8;
+        ctx.shadowColor = b.color.glow;
+        ctx.fill();
+
+        // Inner Specular Glass Highlight
+        ctx.beginPath();
+        ctx.roundRect(b.x + 4, drawY + 4, b.width - 8, b.height / 2 - 2, 4);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Render Falling Active Block inside wobble space
+      if (fallingBlock && fallingBlock.isDropped) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(fallingBlock.x, fallingBlock.y, fallingBlock.width, fallingBlock.height, 8);
+        ctx.fillStyle = fallingBlock.color.fill;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = fallingBlock.color.glow;
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+
+      // Render Active Swinging Block (Outside Wobble Space before drop)
+      if (fallingBlock && !fallingBlock.isDropped) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(fallingBlock.x, fallingBlock.y, fallingBlock.width, fallingBlock.height, 8);
+        ctx.fillStyle = fallingBlock.color.fill;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = fallingBlock.color.glow;
+        ctx.fill();
+
+        // Inner Specular Highlight
+        ctx.beginPath();
+        ctx.roundRect(fallingBlock.x + 4, fallingBlock.y + 4, fallingBlock.width - 8, fallingBlock.height / 2 - 2, 4);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // C. Render Particles
+      particles.forEach(p => p.draw(ctx, cameraY));
+    }
+
+    // --- Global Setup ---
+    highScoreEl.textContent = highScore;
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+  </script>
+</body>
+</html>
