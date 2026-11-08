@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Football Penalty Shootout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #05050a;
+            color: #ffffff;
+            overflow: hidden;
+            touch-action: none;
+        }
+        .neon-glow-cyan {
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.6), inset 0 0 15px rgba(0, 243, 255, 0.6);
+        }
+        .neon-glow-magenta {
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.8), inset 0 0 20px rgba(255, 0, 127, 0.8);
+        }
+        .neon-text-cyan {
+            text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff;
+        }
+        .neon-text-magenta {
+            text-shadow: 0 0 10px #ff007f, 0 0 20px #ff007f;
+        }
+        .neon-text-yellow {
+            text-shadow: 0 0 10px #ccff00, 0 0 20px #ccff00;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between h-screen w-screen select-none m-0 p-0">
+
+    <!-- Top HUD Header -->
+    <header class="w-full max-w-[400px] flex justify-between items-center px-4 py-3 bg-[#0b0b16] border-b border-[#00f3ff]/30 z-10 shadow-lg">
+        <div class="flex flex-col">
+            <span class="text-[10px] text-cyan-400 font-semibold tracking-wider">SCORE</span>
+            <span id="scoreDisplay" class="text-xl font-black neon-text-cyan">0</span>
+        </div>
+        <div class="flex flex-col items-center">
+            <span class="text-[10px] text-yellow-400 font-semibold tracking-wider">BALLS</span>
+            <span id="ballsDisplay" class="text-xl font-black neon-text-yellow">5/5</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <div class="flex flex-col items-end">
+                <span class="text-[10px] text-pink-500 font-semibold tracking-wider">HI-SCORE</span>
+                <span id="hiScoreDisplay" class="text-xl font-black neon-text-magenta">0</span>
+            </div>
+            <button id="pauseBtn" class="ml-2 px-3 py-1 bg-gray-900 border border-cyan-400 text-cyan-400 text-xs font-bold rounded hover:bg-cyan-950 active:scale-95 transition-all">PAUSE</button>
+        </div>
+    </header>
+
+    <!-- Main Game Canvas Container -->
+    <main class="relative flex-grow flex items-center justify-center w-full bg-[#05050a] overflow-hidden">
+        <canvas id="gameCanvas" class="block bg-[#080812] border-x border-[#00f3ff]/20 shadow-2xl"></canvas>
+        
+        <!-- Floating Feedback Notification Overlay -->
+        <div id="notificationBanner" class="absolute pointer-events-none text-3xl font-black tracking-widest opacity-0 transition-all duration-300 transform scale-50 z-20"></div>
+    </main>
+
+    <!-- Footer Instruction Bar -->
+    <footer class="w-full max-w-[400px] text-center py-2 bg-[#0b0b16] border-t border-[#00f3ff]/30 text-[10px] text-cyan-300 tracking-widest z-10">
+        SWIPE / DRAG & RELEASE TO SHOOT
+    </footer>
+
+    <!-- Pause Modal Overlay -->
+    <div id="pauseModal" class="absolute inset-0 bg-black/80 backdrop-blur-sm hidden flex flex-col items-center justify-center z-50 p-6">
+        <div class="bg-[#0b0b16] border-2 border-[#00f3ff] p-6 rounded-2xl w-full max-w-[320px] text-center shadow-[0_0_30px_rgba(0,243,255,0.4)]">
+            <h2 class="text-2xl font-black neon-text-cyan mb-6">GAME PAUSED</h2>
+            <div class="flex flex-col space-y-4">
+                <button id="resumeBtn" class="w-full py-3 bg-[#00f3ff] text-black font-extrabold rounded-xl shadow-lg hover:bg-cyan-300 active:scale-95 transition-all">RESUME</button>
+                <button id="restartFromPauseBtn" class="w-full py-3 bg-transparent border-2 border-pink-500 text-pink-400 font-extrabold rounded-xl hover:bg-pink-950/40 active:scale-95 transition-all">RESTART</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal Overlay -->
+    <div id="gameOverModal" class="absolute inset-0 bg-black/85 backdrop-blur-md hidden flex flex-col items-center justify-center z-50 p-6">
+        <div class="bg-[#0b0b16] border-2 border-pink-500 p-6 rounded-2xl w-full max-w-[320px] text-center shadow-[0_0_40px_rgba(255,0,127,0.5)]">
+            <h2 class="text-2xl font-black neon-text-magenta mb-2">FULL TIME</h2>
+            <p class="text-xs text-gray-400 mb-6">MATCH CONCLUDED</p>
+            
+            <div class="bg-gray-900/80 border border-gray-800 rounded-xl p-4 mb-6 flex justify-around">
+                <div>
+                    <span class="text-[10px] text-gray-400 block">FINAL SCORE</span>
+                    <span id="finalScore" class="text-2xl font-black text-white">0</span>
+                </div>
+                <div class="border-r border-gray-800"></div>
+                <div>
+                    <span class="text-[10px] text-gray-400 block">BEST SCORE</span>
+                    <span id="finalHiScore" class="text-2xl font-black text-yellow-400">0</span>
+                </div>
+            </div>
+
+            <button id="playAgainBtn" class="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black text-lg rounded-xl shadow-[0_0_20px_rgba(255,0,127,0.6)] hover:brightness-110 active:scale-95 transition-all">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        // Setup canvas and rendering context
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // UI Element References
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const ballsDisplay = document.getElementById("ballsDisplay");
+        const hiScoreDisplay = document.getElementById("hiScoreDisplay");
+        const pauseBtn = document.getElementById("pauseBtn");
+        const pauseModal = document.getElementById("pauseModal");
+        const resumeBtn = document.getElementById("resumeBtn");
+        const restartFromPauseBtn = document.getElementById("restartFromPauseBtn");
+        const gameOverModal = document.getElementById("gameOverModal");
+        const finalScore = document.getElementById("finalScore");
+        const finalHiScore = document.getElementById("finalHiScore");
+        const playAgainBtn = document.getElementById("playAgainBtn");
+        const notificationBanner = document.getElementById("notificationBanner");
+
+        // Game State Variables
+        let score = 0;
+        let hiScore = localStorage.getItem("neon_football_highscore") || 0;
+        let ballsRemaining = 5;
+        let gameState = "READY"; // READY, SHOOTING, GOAL, SAVED, MISSED, PAUSED, GAMEOVER
+        let notificationTimer = 0;
+
+        // Goal parameters
+        const goalWidth = 240;
+        const goalHeight = 100;
+        let goalX = 0;
+        let goalY = 40;
+
+        // Goalkeeper block parameters
+        let keeper = {
+            width: 50,
+            height: 20,
+            x: 0,
+            y: 90,
+            speed: 3.5,
+            direction: 1
+        };
+
+        // Ball parameters
+        let ball = {
+            x: 0,
+            y: 0,
+            radius: 12,
+            vx: 0,
+            vy: 0,
+            isMoving: false,
+            trail: []
+        };
+
+        // Swipe & Aim Interaction Variables
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let currentX = 0;
+        let currentY = 0;
+
+        // Particle system storage
+        let particles = [];
+        let netVibration = 0;
+
+        // Initialize Hi-Score display on load
+        hiScoreDisplay.textContent = hiScore;
+
+        // Responsive Canvas Setup per specs
+        function resizeGame() {
+            const maxWidth = 400;
+            const containerWidth = Math.min(window.innerWidth, maxWidth);
+            canvas.width = containerWidth;
+            canvas.height = Math.min(window.innerHeight * 0.75, 600);
+
+            // Re-center goal and keeper bounds based on new canvas width
+            goalX = (canvas.width - goalWidth) / 2;
+            keeper.y = goalY + goalHeight - 15;
+
+            // Reset ball position dynamically if in ready state
+            if (!ball.isMoving && gameState === "READY") {
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height - 60;
+            }
+        }
+
+        window.addEventListener("resize", resizeGame);
+        resizeGame();
+
+        // Particle class for neon fireworks explosions
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 6 + 2;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.03 + 0.015;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.15; // Gravity effect
+                this.alpha -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(this.alpha, 0);
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Trigger floating neon banner notification
+        function showNotification(text, colorClass) {
+            notificationBanner.textContent = text;
+            notificationBanner.className = `absolute pointer-events-none text-3xl font-black tracking-widest transition-all duration-300 transform scale-100 z-20 ${colorClass}`;
+            notificationBanner.style.left = "50%";
+            notificationBanner.style.top = "40%";
+            notificationBanner.style.transform = "translate(-50%, -50%) scale(1)";
+            notificationBanner.style.opacity = "1";
+            
+            notificationTimer = 60; // Frames to display
+        }
+
+        function hideNotification() {
+            notificationBanner.style.opacity = "0";
+            notificationBanner.style.transform = "translate(-50%, -50%) scale(0.5)";
+        }
+
+        // Reset ball for next shot
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height - 60;
+            ball.vx = 0;
+            ball.vy = 0;
+            ball.isMoving = false;
+            ball.trail = [];
+            isDragging = false;
+
+            if (ballsRemaining <= 0) {
+                triggerGameOver();
+            } else {
+                gameState = "READY";
+            }
+        }
+
+        // Trigger goal explosion effect
+        function triggerGoalExplosion(x, y) {
+            netVibration = 20;
+            for (let i = 0; i < 50; i++) {
+                const colors = ["#00f3ff", "#ff007f", "#ccff00", "#ffffff"];
+                particles.push(new Particle(x, y, colors[Math.floor(Math.random() * colors.length)]));
+            }
+        }
+
+        // Trigger save/miss particle burst
+        function triggerSmallBurst(x, y, color) {
+            for (let i = 0; i < 20; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        // Input Handling: Touch and Mouse Events
+        function getTouchPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        canvas.addEventListener("mousedown", handleStart);
+        canvas.addEventListener("mousemove", handleMove);
+        canvas.addEventListener("mouseup", handleEnd);
+
+        canvas.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            handleStart(e);
+        }, { passive: false });
+
+        canvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            handleMove(e);
+        }, { passive: false });
+
+        canvas.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            handleEnd(e);
+        }, { passive: false });
+
+        function handleStart(e) {
+            if (gameState !== "READY") return;
+            const pos = getTouchPos(e);
+            
+            // Allow initiating swipe starting close to the ball
+            const dist = Math.hypot(pos.x - ball.x, pos.y - ball.y);
+            if (dist < 50 || pos.y > canvas.height - 120) {
+                isDragging = true;
+                startX = pos.x;
+                startY = pos.y;
+                currentX = pos.x;
+                currentY = pos.y;
+            }
+        }
+
+        function handleMove(e) {
+            if (!isDragging || gameState !== "READY") return;
+            const pos = getTouchPos(e);
+            currentX = pos.x;
+            currentY = pos.y;
+        }
+
+        function handleEnd(e) {
+            if (!isDragging || gameState !== "READY") return;
+            isDragging = false;
+
+            const dx = currentX - startX;
+            const dy = currentY - startY;
+            const distance = Math.hypot(dx, dy);
+
+            // Minimum swipe threshold to trigger a shot
+            if (distance > 15 && dy < 0) {
+                const powerMultiplier = 0.22;
+                ball.vx = dx * powerMultiplier;
+                ball.vy = dy * powerMultiplier;
+
+                // Cap maximum velocity
+                const maxSpeed = 18;
+                const speed = Math.hypot(ball.vx, ball.vy);
+                if (speed > maxSpeed) {
+                    ball.vx = (ball.vx / speed) * maxSpeed;
+                    ball.vy = (ball.vy / speed) * maxSpeed;
+                }
+
+                ball.isMoving = true;
+                gameState = "SHOOTING";
+            }
+        }
+
+        // Game Loop Update Logic
+        function update() {
+            // Update notification timer fade
+            if (notificationTimer > 0) {
+                notificationTimer--;
+                if (notificationTimer === 0) {
+                    hideNotification();
+                }
+            }
+
+            // Animate Goalkeeper movement back and forth
+            if (gameState === "READY" || gameState === "SHOOTING") {
+                keeper.x += keeper.speed * keeper.direction;
+                const leftLimit = goalX + 5;
+                const rightLimit = goalX + goalWidth - keeper.width - 5;
+                if (keeper.x <= leftLimit || keeper.x >= rightLimit) {
+                    keeper.direction *= -1;
+                }
+            }
+
+            // Decay net vibration effect
+            if (netVibration > 0) {
+                netVibration *= 0.9;
+            }
+
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                if (particles[i].alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // Ball movement simulation
+            if (ball.isMoving) {
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+
+                // Store trail history
+                ball.trail.push({ x: ball.x, y: ball.y });
+                if (ball.trail.length > 8) {
+                    ball.trail.shift();
+                }
+
+                // Check out of bounds (sides or top past goal without scoring)
+                if (ball.x < 10 || ball.x > canvas.width - 10 || ball.y < goalY - 30) {
+                    if (gameState === "SHOOTING") {
+                        if (ball.y < goalY && ball.x >= goalX && ball.x <= goalX + goalWidth) {
+                            // Handled by goal check below
+                        } else {
+                            gameState = "MISSED";
+                            ballsRemaining--;
+                            ballsDisplay.textContent = `${ballsRemaining}/5`;
+                            showNotification("MISSED!", "text-red-500 neon-text-magenta");
+                            triggerSmallBurst(ball.x, ball.y, "#ff0055");
+                            setTimeout(resetBall, 1200);
+                        }
+                    }
+                }
+
+                // Check Goalkeeper collision (Block defense)
+                const keeperHitbox = {
+                    x: keeper.x,
+                    y: keeper.y,
+                    w: keeper.width,
+                    h: keeper.height
+                };
+
+                if (
+                    gameState === "SHOOTING" &&
+                    ball.x >= keeperHitbox.x &&
+                    ball.x <= keeperHitbox.x + keeperHitbox.w &&
+                    ball.y >= keeperHitbox.y &&
+                    ball.y <= keeperHitbox.y + keeperHitbox.h
+                ) {
+                    gameState = "SAVED";
+                    ballsRemaining--;
+                    ballsDisplay.textContent = `${ballsRemaining}/5`;
+                    showNotification("SAVED!", "text-cyan-400 neon-text-cyan");
+                    triggerSmallBurst(ball.x, ball.y, "#00f3ff");
+                    ball.vy = -ball.vy * 0.4; // Bounce backward off keeper
+                    ball.vx = (Math.random() - 0.5) * 6;
+                    setTimeout(resetBall, 1200);
+                }
+
+                // Check Goal Scored condition
+                if (
+                    gameState === "SHOOTING" &&
+                    ball.y <= goalY + 10 &&
+                    ball.x >= goalX + 15 &&
+                    ball.x <= goalX + goalWidth - 15
+                ) {
+                    gameState = "GOAL";
+                    score += 100;
+                    scoreDisplay.textContent = score;
+
+                    if (score > hiScore) {
+                        hiScore = score;
+                        hiScoreDisplay.textContent = hiScore;
+                        localStorage.setItem("neon_football_highscore", hiScore);
+                    }
+
+                    showNotification("GOAL!", "text-lime-400 neon-text-yellow");
+                    triggerGoalExplosion(ball.x, ball.y);
+                    ball.isMoving = false;
+                    setTimeout(resetBall, 1400);
+                }
+            }
+        }
+
+        // Render Graphics on Canvas
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Cyberpunk Pitch Grid Lines
+            ctx.strokeStyle = "rgba(0, 243, 255, 0.08)";
+            ctx.lineWidth = 1;
+            const gridSize = 40;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw Penalty Arc & Markings at bottom
+            ctx.strokeStyle = "rgba(0, 243, 255, 0.3)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height - 20, 70, Math.PI, 0, false);
+            ctx.stroke();
+
+            // Draw Neon Goal Net & Posts with vibration offset
+            const vibX = (Math.random() - 0.5) * netVibration;
+            const vibY = (Math.random() - 0.5) * netVibration;
+
+            ctx.save();
+            ctx.translate(vibX, vibY);
+
+            // Net pattern background
+            ctx.fillStyle = "rgba(255, 0, 127, 0.03)";
+            ctx.fillRect(goalX, goalY, goalWidth, goalHeight);
+
+            ctx.strokeStyle = "rgba(255, 0, 127, 0.2)";
+            ctx.lineWidth = 1;
+            for (let nx = goalX; nx <= goalX + goalWidth; nx += 15) {
+                ctx.beginPath();
+                ctx.moveTo(nx, goalY);
+                ctx.lineTo(nx, goalY + goalHeight);
+                ctx.stroke();
+            }
+            for (let ny = goalY; ny <= goalY + goalHeight; ny += 15) {
+                ctx.beginPath();
+                ctx.moveTo(goalX, ny);
+                ctx.lineTo(goalX + goalWidth, ny);
+                ctx.stroke();
+            }
+
+            // Goal Frame Posts (Neon Magenta)
+            ctx.strokeStyle = "#ff007f";
+            ctx.shadowColor = "#ff007f";
+            ctx.shadowBlur = 15;
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            // Left post
+            ctx.moveTo(goalX, goalY + goalHeight);
+            ctx.lineTo(goalX, goalY);
+            // Crossbar
+            ctx.lineTo(goalX + goalWidth, goalY);
+            // Right post
+            ctx.lineTo(goalX + goalWidth, goalY + goalHeight);
+            ctx.stroke();
+            ctx.restore();
+
+            // Draw Goalkeeper Block (Neon Cyan)
+            ctx.fillStyle = "#00f3ff";
+            ctx.shadowColor = "#00f3ff";
+            ctx.shadowBlur = 15;
+            ctx.fillRect(keeper.x, keeper.y, keeper.width, keeper.height);
+            
+            // Goalkeeper inner dark core for cyberpunk aesthetic
+            ctx.fillStyle = "#05050a";
+            ctx.fillRect(keeper.x + 4, keeper.y + 4, keeper.width - 8, keeper.height - 8);
+
+            // Draw Particles
+            particles.forEach(p => p.draw());
+
+            // Draw Ball Trail
+            if (ball.trail.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(ball.trail[0].x, ball.trail[0].y);
+                for (let i = 1; i < ball.trail.length; i++) {
+                    ctx.lineTo(ball.trail[i].x, ball.trail[i].y);
+                }
+                ctx.strokeStyle = "rgba(0, 243, 255, 0.4)";
+                ctx.lineWidth = ball.radius * 1.2;
+                ctx.lineCap = "round";
+                ctx.stroke();
+            }
+
+            // Draw Ball (Neon Cyan glowing sphere)
+            ctx.save();
+            ctx.shadowColor = "#00f3ff";
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = "#00f3ff";
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inner core reflection
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(ball.x - 3, ball.y - 3, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Draw Swipe Aim Trajectory Guide Line when dragging
+            if (isDragging && gameState === "READY") {
+                ctx.save();
+                ctx.strokeStyle = "#ccff00";
+                ctx.shadowColor = "#ccff00";
+                ctx.shadowBlur = 10;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([6, 6]);
+
+                const aimDx = currentX - startX;
+                const aimDy = currentY - startY;
+
+                ctx.beginPath();
+                ctx.moveTo(ball.x, ball.y);
+                // Inverse projection for aiming direction preview
+                ctx.lineTo(ball.x - aimDx * 1.5, ball.y - aimDy * 1.5);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // Main game loop execution
+        function gameLoop() {
+            if (gameState !== "PAUSED" && gameState !== "GAMEOVER") {
+                update();
+                draw();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Game Over Trigger
+        function triggerGameOver() {
+            gameState = "GAMEOVER";
+            finalScore.textContent = score;
+            finalHiScore.textContent = hiScore;
+            gameOverModal.classList.remove("hidden");
+        }
+
+        // Restart Game Function
+        function restartGame() {
+            score = 0;
+            ballsRemaining = 5;
+            scoreDisplay.textContent = score;
+            ballsDisplay.textContent = `${ballsRemaining}/5`;
+            gameOverModal.classList.add("hidden");
+            pauseModal.classList.add("hidden");
+            particles = [];
+            resetBall();
+        }
+
+        // Event Listeners for UI buttons
+        pauseBtn.addEventListener("click", () => {
+            if (gameState !== "GAMEOVER") {
+                gameState = "PAUSED";
+                pauseModal.classList.remove("hidden");
+            }
+        });
+
+        resumeBtn.addEventListener("click", () => {
+            pauseModal.classList.add("hidden");
+            gameState = "READY";
+        });
+
+        restartFromPauseBtn.addEventListener("click", () => {
+            pauseModal.classList.add("hidden");
+            restartGame();
+        });
+
+        playAgainBtn.addEventListener("click", () => {
+            restartGame();
+        });
+
+        // Initialize first ball position and launch loop
+        resetBall();
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
