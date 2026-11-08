@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mini Tennis - Casual Flix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #065f46; font-family: monospace; touch-action: none; }
+    </style>
+</head>
+<body class="flex flex-col justify-between h-screen w-screen select-none text-slate-900">
+
+    <header class="absolute top-0 left-0 right-0 flex justify-between items-center px-4 py-3 bg-white border-b-2 border-slate-800 z-30 shadow-sm">
+        <a href="index.html" class="text-xs font-black text-slate-800 hover:text-emerald-600">← EXIT</a>
+        <div class="flex gap-4 text-xs font-black">
+            <span class="text-emerald-700">RALLY: <span id="rallyVal">0</span></span>
+        </div>
+    </header>
+
+    <div class="relative w-full h-full flex items-center justify-center bg-emerald-100">
+        <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+    </div>
+
+    <!-- Start Overlay -->
+    <div id="startOverlay" class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-40">
+        <div class="bg-white border-2 border-slate-800 shadow-[6px_6px_0px_0px_#1e293b] p-8 rounded-3xl max-w-xs w-full flex flex-col items-center">
+            <span class="text-4xl mb-2">🎾</span>
+            <h1 class="text-2xl font-black text-slate-900 mb-1">MINI TENNIS</h1>
+            <p class="text-slate-600 text-xs mb-6">Tap left or right to move your paddle and keep the rally going!</p>
+            <button onclick="startGame()" class="bg-emerald-300 border-2 border-slate-800 shadow-[3px_3px_0px_0px_#1e293b] text-slate-900 font-black px-6 py-3 rounded-xl w-full transition">START RALLY 🏆</button>
+        </div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="gameOverOverlay" class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm hidden flex flex-col items-center justify-center p-6 text-center z-40">
+        <div class="bg-white border-2 border-slate-800 shadow-[6px_6px_0px_0px_#1e293b] p-8 rounded-3xl max-w-xs w-full flex flex-col items-center">
+            <h2 class="text-2xl font-black text-rose-600 mb-1">MISSED!</h2>
+            <p class="text-slate-600 text-xs mb-4">Total Rally: <span id="finalRally" class="font-bold text-emerald-700">0</span></p>
+            <button onclick="startGame()" class="bg-emerald-300 border-2 border-slate-800 shadow-[3px_3px_0px_0px_#1e293b] text-slate-900 font-black px-6 py-2.5 rounded-xl w-full transition">TRY AGAIN 🔄</button>
+        </div>
+    </div>
+
+    <!-- Tap Controls -->
+    <div class="absolute bottom-6 left-0 right-0 flex justify-between px-8 z-30 pointer-events-none">
+        <button id="leftBtn" class="pointer-events-auto w-16 h-16 bg-white border-2 border-slate-800 shadow-[3px_3px_0px_0px_#1e293b] rounded-2xl text-slate-900 font-black text-xl transition">▲</button>
+        <button id="rightBtn" class="pointer-events-auto w-16 h-16 bg-white border-2 border-slate-800 shadow-[3px_3px_0px_0px_#1e293b] rounded-2xl text-slate-900 font-black text-xl transition">▼</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+
+        let rally = 0, isPlaying = false;
+        let paddle = { y: canvas.height/2 - 40, width: 20, height: 90, speed: 10 };
+        let ball = { x: canvas.width/2, y: canvas.height/2, size: 14, dx: 5, dy: 3 };
+        let keys = { up: false, down: false };
+
+        function startGame() {
+            document.getElementById('startOverlay').classList.add('hidden');
+            document.getElementById('gameOverOverlay').classList.add('hidden');
+            rally = 0;
+            document.getElementById('rallyVal').textContent = rally;
+            ball.x = canvas.width / 2; ball.y = canvas.height / 2;
+            ball.dx = 5; ball.dy = 3;
+            isPlaying = true;
+            loop();
+        }
+
+        const bindTouch = (id, dir) => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[dir] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[dir] = false; });
+            btn.addEventListener('mousedown', () => keys[dir] = true);
+            btn.addEventListener('mouseup', () => keys[dir] = false);
+        };
+        bindTouch('leftBtn', 'up'); bindTouch('rightBtn', 'down');
+
+        function update() {
+            if (!isPlaying) return;
+            if (keys.up) paddle.y -= paddle.speed;
+            if (keys.down) paddle.y += paddle.speed;
+            paddle.y = Math.max(90, Math.min(canvas.height - 120 - paddle.height, paddle.y));
+
+            ball.x += ball.dx; ball.y += ball.dy;
+
+            // Pantulan dinding atas/bawah
+            if (ball.y < 100 || ball.y > canvas.height - 100) ball.dy *= -1;
+
+            // Pantulan paddle pemain (kiri)
+            if (ball.x <= 60 + paddle.width && ball.y >= paddle.y && ball.y <= paddle.y + paddle.height) {
+                ball.dx *= -1.1;
+                rally++;
+                document.getElementById('rallyVal').textContent = rally;
+            }
+
+            // Pantulan dinding kanan otomatis
+            if (ball.x >= canvas.width - 40) ball.dx *= -1;
+
+            // Game over jika bola lewat kiri
+            if (ball.x < 20) endGame();
+        }
+
+        function draw() {
+            ctx.fillStyle = '#d1fae5'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Garis Lapangan Vektor Minimalis
+            ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 3;
+            ctx.strokeRect(40, 90, canvas.width - 80, canvas.height - 180);
+
+            // Paddle Vektor Keren
+            ctx.fillStyle = '#34d399';
+            ctx.fillRect(50, paddle.y, paddle.width, paddle.height);
+            ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2;
+            ctx.strokeRect(50, paddle.y, paddle.width, paddle.height);
+
+            // Bola Tenis
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI * 2); ctx.fill();
+            ctx.stroke();
+
+            if (isPlaying) { update(); requestAnimationFrame(draw); }
+        }
+
+        function loop() {
+            if (isPlaying) { update(); draw(); requestAnimationFrame(loop); }
+        }
+
+        function endGame() {
+            isPlaying = false;
+            document.getElementById('finalRally').textContent = rally;
+            document.getElementById('gameOverOverlay').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
